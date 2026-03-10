@@ -3,7 +3,9 @@
 	"package": "quiet.enchantmentoutline.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+		"RenderTypeAccessor",
+		"ItemRendererMixin",
+		"GameRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

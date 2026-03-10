@@ -31,14 +31,16 @@ public class OutlineVertexConsumers implements VertexConsumer {
     @Override
     public VertexConsumer setColor(int i, int j, int k, int l) {
         original.setColor(i, j, k, l);
-        mask.setColor(i, j, k, l);
+        // 掩码层强制使用纯红色，以便后续着色器识别
+        mask.setColor(255, 0, 0, 255);
         return this;
     }
 
     @Override
     public VertexConsumer setColor(int i) {
         original.setColor(i);
-        mask.setColor(i);
+        // 0xFFFF0000 是纯红 (ARGB)
+        mask.setColor(0xFFFF0000);
         return this;
     }
 
