@@ -1,6 +1,5 @@
 package quiet.enchantmentoutline.postprocess;
 
-import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -50,14 +49,11 @@ public class OutlinePostProcessor {
                 .createRenderPass(() -> "Enchantment Outline Post", 
                         mainTarget.getColorTextureView(), OptionalInt.empty())) {
             
-            // 使用现有的 ENTITY_OUTLINE_BLIT pipeline 进行叠加测试
-            // 这个 pipeline 通常用于全屏 blit
             renderPass.setPipeline(RenderPipelines.ENTITY_OUTLINE_BLIT);
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.bindTexture("InSampler", source.getColorTextureView(), 
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             
-            // 绘制全屏三角形
             renderPass.draw(0, 3);
         }
     }
