@@ -2,16 +2,12 @@ package quiet.enchantmentoutline.postprocess;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
+import java.util.Objects;
 
 /**
  * 职责描述: 管理独立的 RenderTarget 和相应的 MultiBufferSource。
@@ -21,8 +17,6 @@ public class MaskBufferManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Buffer");
     private static MaskBufferManager instance;
     private RenderTarget maskTarget;
-    private MultiBufferSource.BufferSource maskBufferSource;
-    private ByteBufferBuilder byteBufferBuilder;
 
     private MaskBufferManager() {}
 
@@ -40,16 +34,6 @@ public class MaskBufferManager {
         return maskTarget;
     }
 
-    public MultiBufferSource getMaskBufferSource() {
-        if (maskBufferSource == null) {
-            if (byteBufferBuilder == null) {
-                byteBufferBuilder = new ByteBufferBuilder(1536);
-            }
-            maskBufferSource = MultiBufferSource.immediate(byteBufferBuilder);
-        }
-        return maskBufferSource;
-    }
-
     public void init(int width, int height) {
         RenderSystem.assertOnRenderThread();
         if (maskTarget != null) {
@@ -60,27 +44,29 @@ public class MaskBufferManager {
     }
 
     /**
-     * 准备掩码缓冲区：清空颜色并从主目标同步深度，确保遮挡关系正确。
+     * 每帧开始时清空掩码颜色。
      */
-    public void prepare(RenderTarget mainTarget) {
+    public void beginFrame() {
         RenderSystem.assertOnRenderThread();
         RenderTarget target = getMaskTarget();
-        
-        // 清空掩码缓冲区的颜色
-        try (RenderPass renderPass = RenderSystem.getDevice()
+
+        // 使用显式清屏指令，避免空 RenderPass 和可空参数告警。
+        RenderSystem.getDevice()
                 .createCommandEncoder()
-                .createRenderPass(() -> "Clear Ench Mask Color", 
-                        target.getColorTextureView(), OptionalInt.of(0))) {
-        }
-        
-        // 从主渲染目标拷贝深度数据，这样掩码渲染就能识别遮挡
-        target.copyDepthFrom(mainTarget);
+                .clearColorTexture(Objects.requireNonNull(target.getColorTexture(), "Mask color texture is not initialized"), 0);
+    }
+
+    /**
+     * 在提交附魔掩码前，同步一次主深度到掩码目标，避免轮廓穿透遮挡物。
+     */
+    public void syncDepthFromMain() {
+        RenderSystem.assertOnRenderThread();
+        RenderTarget target = getMaskTarget();
+        target.copyDepthFrom(Minecraft.getInstance().getMainRenderTarget());
     }
 
     public void drawAndFlush() {
-        if (maskBufferSource != null) {
-            maskBufferSource.endBatch();
-        }
+        // 当前实现不再使用独立的 BufferSource，保留此方法以兼容调用方。
     }
 
     public void onRescale(int width, int height) {

@@ -1,8 +1,6 @@
 package quiet.enchantmentoutline.mixin.client;
 
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,8 +17,8 @@ import quiet.enchantmentoutline.postprocess.OutlinePostProcessor;
 public class GameRendererMixin {
     @Inject(method = "render", at = @At("HEAD"))
     private void onRenderHead(DeltaTracker deltaTracker, boolean bl, CallbackInfo ci) {
-        // 关键点：将主深度缓冲拷贝至掩码缓冲，以实现正确的深度测试
-        MaskBufferManager.getInstance().prepare(Minecraft.getInstance().getMainRenderTarget());
+        // 每帧先清空掩码颜色，深度在实际提交掩码前再同步。
+        MaskBufferManager.getInstance().beginFrame();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V"))
