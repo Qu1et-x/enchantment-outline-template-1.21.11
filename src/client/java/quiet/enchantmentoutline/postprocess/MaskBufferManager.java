@@ -10,13 +10,16 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 /**
- * 职责描述: 管理独立的 RenderTarget 和相应的 MultiBufferSource。
- * 交互映射: 提供独立的渲染源，并支持从主渲染目标同步深度缓冲区。
+ * 职责描述: 管理附魔轮廓掩码 RenderTarget。
+ * 交互映射: 每帧重置掩码颜色/深度，供两阶段掩码写入与后处理采样。
  */
 public class MaskBufferManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Buffer");
     private static MaskBufferManager instance;
     private RenderTarget maskTarget;
+    private RenderTarget sceneDepthTarget;
+    private int beginFrameCount;
+    private int sceneCaptureCount;
 
     private MaskBufferManager() {}
 
@@ -39,8 +42,12 @@ public class MaskBufferManager {
         if (maskTarget != null) {
             maskTarget.destroyBuffers();
         }
+        if (sceneDepthTarget != null) {
+            sceneDepthTarget.destroyBuffers();
+        }
         LOGGER.info("Initializing mask buffer: {}x{}", width, height);
         maskTarget = new TextureTarget("Enchantment Mask", width, height, true);
+        sceneDepthTarget = new TextureTarget("Enchantment Scene Depth", width, height, true);
     }
 
     /**
@@ -49,20 +56,41 @@ public class MaskBufferManager {
     public void beginFrame() {
         RenderSystem.assertOnRenderThread();
         RenderTarget target = getMaskTarget();
+        beginFrameCount++;
+        if (beginFrameCount <= 8) {
+            LOGGER.info("Mask beginFrame #{}, size={}x{}", beginFrameCount, target.width, target.height);
+        }
 
-        // 使用显式清屏指令，避免空 RenderPass 和可空参数告警。
+        // 每帧重置掩码颜色和深度，后续仅写入本帧轮廓几何。
         RenderSystem.getDevice()
                 .createCommandEncoder()
-                .clearColorTexture(Objects.requireNonNull(target.getColorTexture(), "Mask color texture is not initialized"), 0);
+                .clearColorAndDepthTextures(
+                        Objects.requireNonNull(target.getColorTexture(), "Mask color texture is not initialized"),
+                        0,
+                        Objects.requireNonNull(target.getDepthTexture(), "Mask depth texture is not initialized"),
+                        1.0
+                );
     }
 
     /**
-     * 在提交附魔掩码前，同步一次主深度到掩码目标，避免轮廓穿透遮挡物。
+     * 在 renderLevel 内手部清深度前抓取场景深度（包含方块与实体）。
      */
-    public void syncDepthFromMain() {
+    public void captureSceneDepthBeforeHand() {
         RenderSystem.assertOnRenderThread();
-        RenderTarget target = getMaskTarget();
-        target.copyDepthFrom(Minecraft.getInstance().getMainRenderTarget());
+        RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
+        RenderTarget sceneTarget = getSceneDepthTarget();
+        sceneTarget.copyDepthFrom(mainTarget);
+        sceneCaptureCount++;
+        if (sceneCaptureCount <= 20) {
+            LOGGER.info("Captured scene depth before hand clear: pass={}/20, main={}x{}", sceneCaptureCount, mainTarget.width, mainTarget.height);
+        }
+    }
+
+    public RenderTarget getSceneDepthTarget() {
+        if (sceneDepthTarget == null) {
+            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
+        }
+        return sceneDepthTarget;
     }
 
     public void drawAndFlush() {
@@ -72,7 +100,11 @@ public class MaskBufferManager {
     public void onRescale(int width, int height) {
         if (maskTarget != null) {
             maskTarget.resize(width, height);
-            LOGGER.debug("Rescaled mask buffer to {}x{}", width, height);
+            LOGGER.info("Rescaled mask buffer to {}x{}", width, height);
+        }
+        if (sceneDepthTarget != null) {
+            sceneDepthTarget.resize(width, height);
+            LOGGER.info("Rescaled scene depth buffer to {}x{}", width, height);
         }
     }
 }

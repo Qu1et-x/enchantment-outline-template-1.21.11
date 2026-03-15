@@ -23,17 +23,19 @@ import java.util.OptionalInt;
  */
 public class OutlinePostProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Post");
+    private static int processLogCount;
+    private static int skipLogCount;
 
     /**
      * 使用自定义屏幕四边形管线，在片元阶段比较掩码深度与主场景深度。
      */
     private static final RenderPipeline DEPTH_AWARE_OUTLINE_BLIT = RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Identifier.parse("enchantment-outline:pipeline/depth_aware_outline_blit"))
-            .withVertexShader("core/screenquad")
+            .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
             .withFragmentShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
             .withSampler("InSampler")
             .withSampler("MaskDepthSampler")
-            .withSampler("MainDepthSampler")
+            .withSampler("SceneDepthSampler")
             .withBlend(BlendFunction.ENTITY_OUTLINE_BLIT)
             .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
             .withDepthWrite(false)
@@ -58,17 +60,32 @@ public class OutlinePostProcessor {
         MaskBufferManager.getInstance().drawAndFlush();
         
         RenderTarget maskTarget = MaskBufferManager.getInstance().getMaskTarget();
+        if (processLogCount < 12) {
+            processLogCount++;
+            LOGGER.info("Outline process #{}, mask={}x{}", processLogCount, maskTarget.width, maskTarget.height);
+        }
         
         // 简单实现：将掩码缓冲区直接 Blit 到主屏幕
         if (maskTarget != null && maskTarget.getColorTextureView() != null) {
             drawToMain(maskTarget);
+        } else if (skipLogCount < 12) {
+            skipLogCount++;
+            LOGGER.info("Outline process skipped: mask target or color view missing ({}/12)", skipLogCount);
         }
     }
 
     private void drawToMain(RenderTarget source) {
         RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
-        if (source.getColorTextureView() == null || source.getDepthTextureView() == null || mainTarget.getDepthTextureView() == null) {
-            LOGGER.debug("Skipping outline composite because a required texture view is missing.");
+        RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
+        if (source.getColorTextureView() == null || source.getDepthTextureView() == null || sceneDepthTarget.getDepthTextureView() == null) {
+            if (skipLogCount < 12) {
+                skipLogCount++;
+                LOGGER.info("Skipping outline composite: colorView={}, maskDepthView={}, sceneDepthView={} ({}/12)",
+                        source.getColorTextureView() != null,
+                        source.getDepthTextureView() != null,
+                        sceneDepthTarget.getDepthTextureView() != null,
+                        skipLogCount);
+            }
             return;
         }
         
@@ -83,7 +100,7 @@ public class OutlinePostProcessor {
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.bindTexture("MaskDepthSampler", source.getDepthTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            renderPass.bindTexture("MainDepthSampler", mainTarget.getDepthTextureView(),
+            renderPass.bindTexture("SceneDepthSampler", sceneDepthTarget.getDepthTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             
             renderPass.draw(0, 3);

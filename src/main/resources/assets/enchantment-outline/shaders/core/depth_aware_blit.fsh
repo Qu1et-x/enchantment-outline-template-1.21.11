@@ -17,12 +17,10 @@ void main() {
     float maskDepth = texelFetch(MaskDepthSampler, pixel, 0).r;
     float mainDepth = texelFetch(SceneDepthSampler, pixel, 0).r;
 
-    // Keep only fragments that are not hidden behind final scene depth.
     if (maskDepth > mainDepth + 0.00001) {
         discard;
     }
 
     fragColor = color;
 }
-
 

@@ -17,10 +17,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import quiet.enchantmentoutline.renderer.OutlineRenderLayers;
-import quiet.enchantmentoutline.postprocess.MaskBufferManager;
 import quiet.enchantmentoutline.render.OutlineRenderContext;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 职责描述: 拦截渲染图节点的提交过程。
@@ -34,6 +35,9 @@ public class SubmitNodeCollectionMixin {
     @Unique
     private static int ENCHANTMENT_OUTLINE$specialSkipLogCount;
 
+    @Unique
+    private static final Map<ItemDisplayContext, Integer> ENCHANTMENT_OUTLINE$maskPassLogCountByContext = new EnumMap<>(ItemDisplayContext.class);
+
     /**
      * 针对标准物品的节点提交。
      */
@@ -45,10 +49,14 @@ public class SubmitNodeCollectionMixin {
         }
 
         if (shouldWrite) {
-            // 同步提交一个掩码节点，使用完全相同的矩阵和几何体数据
-            MaskBufferManager.getInstance().syncDepthFromMain();
+            // 仅提交掩码两阶段，遮挡在后处理阶段与最终场景深度比较。
             SubmitNodeCollection self = (SubmitNodeCollection) (Object) this;
-            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.MASK_LAYER, ItemStackRenderState.FoilType.NONE);
+            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.ZFIX_DEPTH_LAYER, ItemStackRenderState.FoilType.NONE);
+            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.OUTLINE_COLOR_LAYER, ItemStackRenderState.FoilType.NONE);
+            int count = nextMaskPassLogCount(itemDisplayContext);
+            if (count <= 12) {
+                LOGGER.info("submitItem mask two-pass: context={}, foilType={}, contextPass={}/12", itemDisplayContext, foilType, count);
+            }
         }
     }
 
@@ -68,10 +76,14 @@ public class SubmitNodeCollectionMixin {
         }
 
         if (shouldWrite) { // bl2 在此处对应是否有附魔效果
-            MaskBufferManager.getInstance().syncDepthFromMain();
             SubmitNodeCollection self = (SubmitNodeCollection) (Object) this;
             // 提交一个掩码节点，注意将 bl2 设为 false 以防无限递归
-            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.MASK_LAYER, i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
+            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.ZFIX_DEPTH_LAYER, i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
+            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.OUTLINE_COLOR_LAYER, i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
+            int count = nextMaskPassLogCount(context);
+            if (count <= 12) {
+                LOGGER.info("submitModelPart mask two-pass: context={}, renderType={}, contextPass={}/12", context, renderType, count);
+            }
         }
     }
 
@@ -83,4 +95,13 @@ public class SubmitNodeCollectionMixin {
                 || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 || context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
     }
+
+    @Unique
+    private static int nextMaskPassLogCount(ItemDisplayContext context) {
+        ItemDisplayContext key = context == null ? ItemDisplayContext.NONE : context;
+        int next = ENCHANTMENT_OUTLINE$maskPassLogCountByContext.getOrDefault(key, 0) + 1;
+        ENCHANTMENT_OUTLINE$maskPassLogCountByContext.put(key, next);
+        return next;
+    }
+
 }
