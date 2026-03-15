@@ -4,7 +4,6 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.TextureTransform;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import quiet.enchantmentoutline.mixin.client.RenderTypeAccessor;
 import quiet.enchantmentoutline.postprocess.MaskBufferManager;

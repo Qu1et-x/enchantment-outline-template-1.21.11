@@ -3,13 +3,12 @@
 	"id": "enchantment-outline",
 	"version": "${version}",
 	"name": "Enchantment-Outline",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Adds an enchantment-based item outline effect.",
 	"authors": [
-		"Me!"
+		"Quiet"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://example.invalid/enchantment-outline"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/enchantment-outline/icon.png",
@@ -23,7 +22,6 @@
 		]
 	},
 	"mixins": [
-		"enchantment-outline.mixins.json",
 		{
 			"config": "enchantment-outline.client.mixins.json",
 			"environment": "client"
