@@ -1,6 +1,7 @@
 package quiet.enchantmentoutline.mixin.client;
 
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,10 @@ public class GameRendererMixin {
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
     private void onBeforeMainDepthClear(DeltaTracker deltaTracker, boolean bl, CallbackInfo ci) {
+        if (Minecraft.getInstance().level == null) {
+            return;
+        }
+
         if (POST_HOOK_LOG_COUNT < 20) {
             POST_HOOK_LOG_COUNT++;
             LOGGER.info("Frame hook before main depth clear: pass={}/20", POST_HOOK_LOG_COUNT);

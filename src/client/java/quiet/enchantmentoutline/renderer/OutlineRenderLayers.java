@@ -8,6 +8,8 @@ import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.mixin.client.RenderSetupTextureBindingAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderSetupTexturesAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderTypeAccessor;
@@ -22,7 +24,13 @@ import java.util.Map;
  * 交互映射: 供 OutlineVertexConsumers 调用，用于获取掩码渲染层。
  */
 public class OutlineRenderLayers {
+    private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Layers");
+    private static final int OBSERVABILITY_WINDOW = 24;
+    private static final int DYNAMIC_LAYER_CACHE_LIMIT = 128;
     private static final Identifier DEFAULT_ITEM_ATLAS = Identifier.withDefaultNamespace("textures/atlas/items.png");
+    private static int CREATE_LOG_COUNT;
+    private static int CACHE_LIMIT_LOG_COUNT;
+    private static int RESOLVE_FALLBACK_LOG_COUNT;
 
     private static final RenderPipeline OUTLINE_ZFIX_DEPTH_PIPELINE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
@@ -66,12 +74,36 @@ public class OutlineRenderLayers {
 
     public static synchronized RenderType getZfixDepthLayer(Identifier textureId) {
         Identifier key = textureId == null ? DEFAULT_ITEM_ATLAS : textureId;
-        return ZFIX_DEPTH_LAYERS.computeIfAbsent(key, OutlineRenderLayers::createZfixDepthLayer);
+        RenderType cached = ZFIX_DEPTH_LAYERS.get(key);
+        if (cached != null) {
+            return cached;
+        }
+
+        if (ZFIX_DEPTH_LAYERS.size() >= DYNAMIC_LAYER_CACHE_LIMIT) {
+            return fallbackToDefaultLayer(ZFIX_DEPTH_LAYERS, ZFIX_DEPTH_LAYER, "zfix", key);
+        }
+
+        RenderType created = createZfixDepthLayer(key);
+        ZFIX_DEPTH_LAYERS.put(key, created);
+        logLayerCreate("zfix", key, ZFIX_DEPTH_LAYERS.size());
+        return created;
     }
 
     public static synchronized RenderType getOutlineColorLayer(Identifier textureId) {
         Identifier key = textureId == null ? DEFAULT_ITEM_ATLAS : textureId;
-        return OUTLINE_COLOR_LAYERS.computeIfAbsent(key, OutlineRenderLayers::createOutlineColorLayer);
+        RenderType cached = OUTLINE_COLOR_LAYERS.get(key);
+        if (cached != null) {
+            return cached;
+        }
+
+        if (OUTLINE_COLOR_LAYERS.size() >= DYNAMIC_LAYER_CACHE_LIMIT) {
+            return fallbackToDefaultLayer(OUTLINE_COLOR_LAYERS, OUTLINE_COLOR_LAYER, "color", key);
+        }
+
+        RenderType created = createOutlineColorLayer(key);
+        OUTLINE_COLOR_LAYERS.put(key, created);
+        logLayerCreate("color", key, OUTLINE_COLOR_LAYERS.size());
+        return created;
     }
 
     public static Identifier resolveMaskTexture(RenderType sourceRenderType) {
@@ -85,7 +117,44 @@ public class OutlineRenderLayers {
             }
         }
 
+        if (RESOLVE_FALLBACK_LOG_COUNT < OBSERVABILITY_WINDOW) {
+            RESOLVE_FALLBACK_LOG_COUNT++;
+            LOGGER.info("Mask texture fallback to default atlas for renderType={} ({}/{})",
+                    sourceRenderType,
+                    RESOLVE_FALLBACK_LOG_COUNT,
+                    OBSERVABILITY_WINDOW);
+        }
+
         return DEFAULT_ITEM_ATLAS;
+    }
+
+    private static RenderType fallbackToDefaultLayer(Map<Identifier, RenderType> cache, RenderType defaultLayer, String passName, Identifier requestedTexture) {
+        if (CACHE_LIMIT_LOG_COUNT < OBSERVABILITY_WINDOW) {
+            CACHE_LIMIT_LOG_COUNT++;
+            LOGGER.warn("Dynamic layer cache limit reached ({}). pass={}, requestedTexture={}, fallbackTexture={} ({}/{})",
+                    DYNAMIC_LAYER_CACHE_LIMIT,
+                    passName,
+                    requestedTexture,
+                    DEFAULT_ITEM_ATLAS,
+                    CACHE_LIMIT_LOG_COUNT,
+                    OBSERVABILITY_WINDOW);
+        }
+
+        RenderType fallback = cache.get(DEFAULT_ITEM_ATLAS);
+        return fallback != null ? fallback : defaultLayer;
+    }
+
+    private static void logLayerCreate(String passName, Identifier textureId, int size) {
+        if (CREATE_LOG_COUNT < OBSERVABILITY_WINDOW) {
+            CREATE_LOG_COUNT++;
+            LOGGER.info("Created dynamic mask layer: pass={}, texture={}, cacheSize={}/{} ({}/{})",
+                    passName,
+                    textureId,
+                    size,
+                    DYNAMIC_LAYER_CACHE_LIMIT,
+                    CREATE_LOG_COUNT,
+                    OBSERVABILITY_WINDOW);
+        }
     }
 
     private static RenderType createZfixDepthLayer(Identifier textureId) {
