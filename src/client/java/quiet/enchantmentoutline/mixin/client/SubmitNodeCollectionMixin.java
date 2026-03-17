@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +52,9 @@ public class SubmitNodeCollectionMixin {
         if (shouldWrite) {
             // 仅提交掩码两阶段，遮挡在后处理阶段与最终场景深度比较。
             SubmitNodeCollection self = (SubmitNodeCollection) (Object) this;
-            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.ZFIX_DEPTH_LAYER, ItemStackRenderState.FoilType.NONE);
-            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.OUTLINE_COLOR_LAYER, ItemStackRenderState.FoilType.NONE);
+            Identifier textureId = OutlineRenderLayers.resolveMaskTexture(renderType);
+            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.getZfixDepthLayer(textureId), ItemStackRenderState.FoilType.NONE);
+            self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.getOutlineColorLayer(textureId), ItemStackRenderState.FoilType.NONE);
             int count = nextMaskPassLogCount(itemDisplayContext);
             if (count <= 12) {
                 LOGGER.info("submitItem mask two-pass: context={}, foilType={}, contextPass={}/12", itemDisplayContext, foilType, count);
@@ -77,9 +79,10 @@ public class SubmitNodeCollectionMixin {
 
         if (shouldWrite) { // bl2 在此处对应是否有附魔效果
             SubmitNodeCollection self = (SubmitNodeCollection) (Object) this;
+            Identifier textureId = OutlineRenderLayers.resolveMaskTexture(renderType);
             // 提交一个掩码节点，注意将 bl2 设为 false 以防无限递归
-            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.ZFIX_DEPTH_LAYER, i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
-            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.OUTLINE_COLOR_LAYER, i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
+            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.getZfixDepthLayer(textureId), i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
+            self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.getOutlineColorLayer(textureId), i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
             int count = nextMaskPassLogCount(context);
             if (count <= 12) {
                 LOGGER.info("submitModelPart mask two-pass: context={}, renderType={}, contextPass={}/12", context, renderType, count);

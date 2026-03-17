@@ -4,6 +4,9 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"RenderTypeAccessor",
+		"RenderTypeStateAccessor",
+		"RenderSetupTexturesAccessor",
+		"RenderSetupTextureBindingAccessor",
 		"GameRendererMixin",
 		"SubmitNodeCollectionMixin",
 		"ItemStackRenderStateMixin"
