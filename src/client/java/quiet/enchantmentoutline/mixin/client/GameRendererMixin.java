@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import quiet.enchantmentoutline.postprocess.MaskBufferManager;
 import quiet.enchantmentoutline.postprocess.OutlinePostProcessor;
-import quiet.enchantmentoutline.technique.OutlineTechniqueManager;
 
 /**
  * 职责描述: 注入 GameRenderer 的每一帧渲染流程。
@@ -54,6 +53,5 @@ public class GameRendererMixin {
     @Inject(method = "resize", at = @At("RETURN"))
     private void onResizeReturn(int width, int height, CallbackInfo ci) {
         MaskBufferManager.getInstance().onRescale(width, height);
-        OutlineTechniqueManager.getInstance().onResize(width, height);
     }
 }
