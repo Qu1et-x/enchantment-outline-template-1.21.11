@@ -1,5 +1,7 @@
 package quiet.enchantmentoutline.technique;
 
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
+
 /**
  * 描边算法统一契约。
  */

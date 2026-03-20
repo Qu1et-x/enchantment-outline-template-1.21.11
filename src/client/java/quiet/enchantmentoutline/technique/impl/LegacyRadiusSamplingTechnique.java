@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.technique.impl.legacy;
+package quiet.enchantmentoutline.technique.impl;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -13,16 +13,15 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import quiet.enchantmentoutline.technique.OutlineTechnique;
-import quiet.enchantmentoutline.technique.OutlineTechniqueContext;
 import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
 
 import java.util.OptionalInt;
 
 /**
  * 现有半径采样描边实现，作为阶段一默认算法。
  */
-public class LegacyRadiusSamplingTechnique implements OutlineTechnique {
+public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Technique");
     private static int skipLogCount;
 
@@ -40,14 +39,8 @@ public class LegacyRadiusSamplingTechnique implements OutlineTechnique {
             .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
             .build());
 
-    @Override
-    public OutlineTechniqueMode mode() {
-        return OutlineTechniqueMode.LEGACY_RADIUS;
-    }
-
-    @Override
-    public String debugName() {
-        return "LegacyRadiusSamplingTechnique";
+    public LegacyRadiusSamplingTechnique() {
+        super(OutlineTechniqueMode.LEGACY_RADIUS, "LegacyRadiusSamplingTechnique");
     }
 
     @Override
@@ -84,4 +77,6 @@ public class LegacyRadiusSamplingTechnique implements OutlineTechnique {
         }
     }
 }
+
+
 

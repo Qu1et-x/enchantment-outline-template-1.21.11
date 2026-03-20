@@ -2,8 +2,9 @@ package quiet.enchantmentoutline.technique;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
 import quiet.enchantmentoutline.technique.impl.DelegatingPlaceholderTechnique;
-import quiet.enchantmentoutline.technique.impl.legacy.LegacyRadiusSamplingTechnique;
+import quiet.enchantmentoutline.technique.impl.LegacyRadiusSamplingTechnique;
 
 import java.util.EnumMap;
 import java.util.Map;

@@ -17,8 +17,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import quiet.enchantmentoutline.renderer.OutlineRenderLayers;
 import quiet.enchantmentoutline.render.OutlineRenderContext;
+import quiet.enchantmentoutline.render.OutlineRenderLayers;
 
 import java.util.EnumMap;
 import java.util.List;

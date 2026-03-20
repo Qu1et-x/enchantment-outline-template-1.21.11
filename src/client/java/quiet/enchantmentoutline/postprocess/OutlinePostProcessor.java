@@ -5,9 +5,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import quiet.enchantmentoutline.technique.OutlineTechniqueContext;
 import quiet.enchantmentoutline.technique.OutlineTechniqueManager;
 import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
+import quiet.enchantmentoutline.technique.context.OutlineFrameData;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueSettings;
 
 /**
  * 职责描述: 执行附魔描边的后处理着色逻辑。
@@ -17,8 +19,14 @@ public class OutlinePostProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Post");
     private static int processLogCount;
     private static int skipLogCount;
+    private static int frameCounter;
 
     private static OutlinePostProcessor instance;
+    private static final OutlineTechniqueSettings SHARED_SETTINGS = OutlineTechniqueSettings.builder()
+            .outlineRadiusPixels(Integer.getInteger("enchantmentoutline.radius", 10))
+            .alphaThreshold(parsePropertyFloat("enchantmentoutline.alphaThreshold", 0.001F))
+            .depthEpsilon(parsePropertyFloat("enchantmentoutline.depthEpsilon", 0.00001F))
+            .build();
 
     private OutlinePostProcessor() {}
 
@@ -46,6 +54,7 @@ public class OutlinePostProcessor {
         RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
         RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
         OutlineTechniqueManager techniqueManager = OutlineTechniqueManager.getInstance();
+        frameCounter++;
 
         if (processLogCount < 12) {
             processLogCount++;
@@ -58,11 +67,32 @@ public class OutlinePostProcessor {
         
         // 后处理入口只负责分发，具体算法由 technique 子模块实现。
         if (maskTarget != null && maskTarget.getColorTextureView() != null) {
-            OutlineTechniqueContext context = new OutlineTechniqueContext(mainTarget, maskTarget, sceneDepthTarget);
+            OutlineFrameData frameData = new OutlineFrameData(
+                    frameCounter,
+                    mainTarget.width,
+                    mainTarget.height,
+                    Minecraft.getInstance().level != null,
+                    SHARED_SETTINGS
+            );
+            OutlineTechniqueContext context = new OutlineTechniqueContext(mainTarget, maskTarget, sceneDepthTarget, frameData);
             techniqueManager.process(context);
         } else if (skipLogCount < 12) {
             skipLogCount++;
             LOGGER.info("Outline process skipped: mask target or color view missing ({}/12)", skipLogCount);
+        }
+    }
+
+    private static float parsePropertyFloat(String key, float fallback) {
+        String raw = System.getProperty(key);
+        if (raw == null) {
+            return fallback;
+        }
+
+        try {
+            return Float.parseFloat(raw);
+        } catch (NumberFormatException ex) {
+            LOGGER.warn("Invalid float property {}='{}', fallback to {}", key, raw, fallback);
+            return fallback;
         }
     }
 }

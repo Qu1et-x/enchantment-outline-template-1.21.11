@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.renderer;
+package quiet.enchantmentoutline.render;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -181,3 +181,4 @@ public class OutlineRenderLayers {
         );
     }
 }
+
