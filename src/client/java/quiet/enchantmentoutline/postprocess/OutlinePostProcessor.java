@@ -1,21 +1,13 @@
 package quiet.enchantmentoutline.postprocess;
 
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.textures.FilterMode;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.OptionalInt;
+import quiet.enchantmentoutline.technique.OutlineTechniqueContext;
+import quiet.enchantmentoutline.technique.OutlineTechniqueManager;
+import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
 
 /**
  * 职责描述: 执行附魔描边的后处理着色逻辑。
@@ -25,23 +17,6 @@ public class OutlinePostProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Post");
     private static int processLogCount;
     private static int skipLogCount;
-
-    /**
-     * 使用自定义屏幕四边形管线，在片元阶段比较掩码深度与主场景深度。
-     */
-    private static final RenderPipeline DEPTH_AWARE_OUTLINE_BLIT = RenderPipelines.register(RenderPipeline.builder()
-            .withLocation(Identifier.parse("enchantment-outline:pipeline/depth_aware_outline_blit"))
-            .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
-            .withFragmentShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
-            .withSampler("InSampler")
-            .withSampler("MaskDepthSampler")
-            .withSampler("SceneDepthSampler")
-            .withBlend(BlendFunction.ENTITY_OUTLINE_BLIT)
-            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-            .withDepthWrite(false)
-            .withColorWrite(true, false)
-            .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
-            .build());
 
     private static OutlinePostProcessor instance;
 
@@ -54,56 +29,40 @@ public class OutlinePostProcessor {
         return instance;
     }
 
+    public void setTechniqueMode(OutlineTechniqueMode mode) {
+        OutlineTechniqueManager.getInstance().setMode(mode);
+    }
+
+    public void setTechniqueMode(String modeText) {
+        OutlineTechniqueManager.getInstance().setMode(modeText);
+    }
+
     public void process() {
         RenderSystem.assertOnRenderThread();
         // 确保所有代理写入的数据都已提交到渲染目标
         MaskBufferManager.getInstance().drawAndFlush();
         
         RenderTarget maskTarget = MaskBufferManager.getInstance().getMaskTarget();
+        RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
+        RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
+        OutlineTechniqueManager techniqueManager = OutlineTechniqueManager.getInstance();
+
         if (processLogCount < 12) {
             processLogCount++;
-            LOGGER.info("Outline process #{}, mask={}x{}", processLogCount, maskTarget.width, maskTarget.height);
+            LOGGER.info("Outline process #{}, mode={}, mask={}x{}",
+                    processLogCount,
+                    techniqueManager.getCurrentMode().id(),
+                    maskTarget.width,
+                    maskTarget.height);
         }
         
-        // 简单实现：将掩码缓冲区直接 Blit 到主屏幕
+        // 后处理入口只负责分发，具体算法由 technique 子模块实现。
         if (maskTarget != null && maskTarget.getColorTextureView() != null) {
-            drawToMain(maskTarget);
+            OutlineTechniqueContext context = new OutlineTechniqueContext(mainTarget, maskTarget, sceneDepthTarget);
+            techniqueManager.process(context);
         } else if (skipLogCount < 12) {
             skipLogCount++;
             LOGGER.info("Outline process skipped: mask target or color view missing ({}/12)", skipLogCount);
-        }
-    }
-
-    private void drawToMain(RenderTarget source) {
-        RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
-        RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
-        if (source.getColorTextureView() == null || source.getDepthTextureView() == null || sceneDepthTarget.getDepthTextureView() == null) {
-            if (skipLogCount < 12) {
-                skipLogCount++;
-                LOGGER.info("Skipping outline composite: colorView={}, maskDepthView={}, sceneDepthView={} ({}/12)",
-                        source.getColorTextureView() != null,
-                        source.getDepthTextureView() != null,
-                        sceneDepthTarget.getDepthTextureView() != null,
-                        skipLogCount);
-            }
-            return;
-        }
-        
-        try (RenderPass renderPass = RenderSystem.getDevice()
-                .createCommandEncoder()
-                .createRenderPass(() -> "Enchantment Outline Post", 
-                        mainTarget.getColorTextureView(), OptionalInt.empty())) {
-            
-            renderPass.setPipeline(DEPTH_AWARE_OUTLINE_BLIT);
-            RenderSystem.bindDefaultUniforms(renderPass);
-            renderPass.bindTexture("InSampler", source.getColorTextureView(), 
-                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            renderPass.bindTexture("MaskDepthSampler", source.getDepthTextureView(),
-                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            renderPass.bindTexture("SceneDepthSampler", sceneDepthTarget.getDepthTextureView(),
-                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            
-            renderPass.draw(0, 3);
         }
     }
 }
