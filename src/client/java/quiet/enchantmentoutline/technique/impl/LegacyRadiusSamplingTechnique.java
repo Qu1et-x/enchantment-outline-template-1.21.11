@@ -13,9 +13,11 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
-import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueInput;
 
+import java.util.Objects;
 import java.util.OptionalInt;
 
 /**
@@ -46,15 +48,15 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
     }
 
     @Override
-    public void process(OutlineTechniqueContext context) {
-        RenderTarget source = context.hollowMaskTarget();
-        RenderTarget rawMaskTarget = context.rawMaskTarget();
-        RenderTarget sceneDepthTarget = context.sceneDepthTarget();
+    public void process(OutlineTechniqueInput input) {
+        RenderTarget source = input.hollowMaskTarget();
+        RenderTarget rawMaskTarget = input.rawMaskTarget();
+        RenderTarget sceneDepthTarget = input.sceneDepthTarget();
         if (source.getColorTextureView() == null
                 || rawMaskTarget.getColorTextureView() == null
                 || rawMaskTarget.getDepthTextureView() == null
                 || sceneDepthTarget.getDepthTextureView() == null) {
-            if (skipLogCount < 20) {
+            if (OutlineDebugFlags.TECHNIQUE && skipLogCount < 20) {
                 skipLogCount++;
                 LOGGER.info("Skipping legacy composite: hollowColorView={}, rawColorView={}, maskDepthView={}, sceneDepthView={} ({}/20)",
                         source.getColorTextureView() != null,
@@ -66,7 +68,7 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
             return;
         }
 
-        if (processLogCount < 16) {
+        if (OutlineDebugFlags.TECHNIQUE && processLogCount < 16) {
             processLogCount++;
             LOGGER.info("Legacy composite pass #{}: hollowColor={}, rawColor={}, rawDepth={}, sceneDepth={}",
                     processLogCount,
@@ -79,7 +81,8 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
         try (RenderPass renderPass = RenderSystem.getDevice()
                 .createCommandEncoder()
                 .createRenderPass(() -> "Enchantment Outline Post",
-                        context.mainTarget().getColorTextureView(), OptionalInt.empty())) {
+                        Objects.requireNonNull(input.mainTarget().getColorTextureView(), "Main target color view is not initialized"),
+                        OptionalInt.empty())) {
 
             renderPass.setPipeline(DEPTH_AWARE_OUTLINE_BLIT);
             RenderSystem.bindDefaultUniforms(renderPass);

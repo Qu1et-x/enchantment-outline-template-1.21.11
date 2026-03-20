@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.mixin.client.RenderSetupTextureBindingAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderSetupTexturesAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderTypeAccessor;
@@ -117,7 +118,7 @@ public class OutlineRenderLayers {
             }
         }
 
-        if (RESOLVE_FALLBACK_LOG_COUNT < OBSERVABILITY_WINDOW) {
+        if (OutlineDebugFlags.SUBMIT && RESOLVE_FALLBACK_LOG_COUNT < OBSERVABILITY_WINDOW) {
             RESOLVE_FALLBACK_LOG_COUNT++;
             LOGGER.info("Mask texture fallback to default atlas for renderType={} ({}/{})",
                     sourceRenderType,
@@ -145,7 +146,7 @@ public class OutlineRenderLayers {
     }
 
     private static void logLayerCreate(String passName, Identifier textureId, int size) {
-        if (CREATE_LOG_COUNT < OBSERVABILITY_WINDOW) {
+        if (OutlineDebugFlags.SUBMIT && CREATE_LOG_COUNT < OBSERVABILITY_WINDOW) {
             CREATE_LOG_COUNT++;
             LOGGER.info("Created dynamic mask layer: pass={}, texture={}, cacheSize={}/{} ({}/{})",
                     passName,

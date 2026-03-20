@@ -5,10 +5,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.technique.OutlineTechniqueManager;
 import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
 import quiet.enchantmentoutline.technique.context.OutlineFrameData;
-import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueInput;
 import quiet.enchantmentoutline.technique.context.OutlineTechniqueSettings;
 
 /**
@@ -47,9 +48,7 @@ public class OutlinePostProcessor {
 
     public void process() {
         RenderSystem.assertOnRenderThread();
-        // 确保所有代理写入的数据都已提交到渲染目标
-        MaskBufferManager.getInstance().drawAndFlush();
-        
+
         RenderTarget maskTarget = MaskBufferManager.getInstance().getMaskTarget();
         RenderTarget hollowMaskTarget = MaskBufferManager.getInstance().getHollowMaskTarget();
         RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
@@ -57,7 +56,7 @@ public class OutlinePostProcessor {
         OutlineTechniqueManager techniqueManager = OutlineTechniqueManager.getInstance();
         frameCounter++;
 
-        if (processLogCount < 12) {
+        if (OutlineDebugFlags.TECHNIQUE && processLogCount < 12) {
             processLogCount++;
             LOGGER.info("Outline process #{}, mode={}, mask={}x{}, hollowColorViewReady={}",
                     processLogCount,
@@ -69,7 +68,6 @@ public class OutlinePostProcessor {
         
         // 后处理入口只负责分发，具体算法由 technique 子模块实现。
         if (maskTarget != null && maskTarget.getColorTextureView() != null) {
-            HollowMaskPreprocessor.getInstance().process(maskTarget, hollowMaskTarget);
             OutlineFrameData frameData = new OutlineFrameData(
                     frameCounter,
                     mainTarget.width,
@@ -77,15 +75,20 @@ public class OutlinePostProcessor {
                     Minecraft.getInstance().level != null,
                     SHARED_SETTINGS
             );
-            OutlineTechniqueContext context = new OutlineTechniqueContext(
-                    mainTarget,
-                    maskTarget,
-                    hollowMaskTarget,
-                    sceneDepthTarget,
-                    frameData
-            );
-            techniqueManager.process(context);
-        } else if (skipLogCount < 12) {
+            OutlineTechniqueInput input = new OutlineTechniqueInputBuilder()
+                    .mainTarget(mainTarget)
+                    .rawMaskTarget(maskTarget)
+                    .hollowMaskTarget(hollowMaskTarget)
+                    .sceneDepthTarget(sceneDepthTarget)
+                    .frameData(frameData)
+                    .build();
+            if (input != null) {
+                techniqueManager.process(input);
+            } else if (OutlineDebugFlags.TECHNIQUE && skipLogCount < 12) {
+                skipLogCount++;
+                LOGGER.info("Outline process skipped: technique input not ready ({}/12)", skipLogCount);
+            }
+        } else if (OutlineDebugFlags.TECHNIQUE && skipLogCount < 12) {
             skipLogCount++;
             LOGGER.info("Outline process skipped: mask target or color view missing ({}/12)", skipLogCount);
         }

@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.render.OutlineRenderContext;
 import quiet.enchantmentoutline.render.OutlineRenderLayers;
 
@@ -56,7 +57,7 @@ public class SubmitNodeCollectionMixin {
             self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.getZfixDepthLayer(textureId), ItemStackRenderState.FoilType.NONE);
             self.submitItem(poseStack, itemDisplayContext, i, j, k, is, list, OutlineRenderLayers.getOutlineColorLayer(textureId), ItemStackRenderState.FoilType.NONE);
             int count = nextMaskPassLogCount(itemDisplayContext);
-            if (count <= 12) {
+            if (OutlineDebugFlags.SUBMIT && count <= 12) {
                 LOGGER.info("submitItem mask two-pass: context={}, foilType={}, contextPass={}/12", itemDisplayContext, foilType, count);
             }
         }
@@ -70,7 +71,7 @@ public class SubmitNodeCollectionMixin {
         ItemDisplayContext context = OutlineRenderContext.current();
         boolean shouldWrite = bl2 && shouldWriteMask(context);
 
-        if (bl2 && !shouldWrite && context == ItemDisplayContext.NONE && ENCHANTMENT_OUTLINE$specialSkipLogCount < 12) {
+        if (OutlineDebugFlags.SUBMIT && bl2 && !shouldWrite && context == ItemDisplayContext.NONE && ENCHANTMENT_OUTLINE$specialSkipLogCount < 12) {
             ENCHANTMENT_OUTLINE$specialSkipLogCount++;
             LOGGER.info("Skipping enchanted special model because display context is NONE. renderType={}, lit={}, skipCount={}", renderType, bl, ENCHANTMENT_OUTLINE$specialSkipLogCount);
         } else if (bl2 && LOGGER.isDebugEnabled()) {
@@ -84,7 +85,7 @@ public class SubmitNodeCollectionMixin {
             self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.getZfixDepthLayer(textureId), i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
             self.submitModelPart(modelPart, poseStack, OutlineRenderLayers.getOutlineColorLayer(textureId), i, j, textureAtlasSprite, bl, false, k, crumblingOverlay, l);
             int count = nextMaskPassLogCount(context);
-            if (count <= 12) {
+            if (OutlineDebugFlags.SUBMIT && count <= 12) {
                 LOGGER.info("submitModelPart mask two-pass: context={}, renderType={}, contextPass={}/12", context, renderType, count);
             }
         }

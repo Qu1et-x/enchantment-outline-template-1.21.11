@@ -2,12 +2,14 @@ package quiet.enchantmentoutline.technique;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
+import quiet.enchantmentoutline.debug.OutlineDebugFlags;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueInput;
 import quiet.enchantmentoutline.technique.impl.DelegatingPlaceholderTechnique;
 import quiet.enchantmentoutline.technique.impl.LegacyRadiusSamplingTechnique;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 算法注册与切换入口。
@@ -19,19 +21,22 @@ public final class OutlineTechniqueManager {
 
     private final Map<OutlineTechniqueMode, OutlineTechnique> techniques = new EnumMap<>(OutlineTechniqueMode.class);
     private volatile OutlineTechniqueMode currentMode = OutlineTechniqueMode.LEGACY_RADIUS;
+    private int processDispatchLogCount;
 
     private OutlineTechniqueManager() {
         registerBuiltins();
         String modeFromProperty = System.getProperty("enchantmentoutline.technique");
         currentMode = OutlineTechniqueMode.parseOrDefault(modeFromProperty, OutlineTechniqueMode.LEGACY_RADIUS);
-        if (modeFromProperty != null) {
+        if (OutlineDebugFlags.TECHNIQUE && modeFromProperty != null) {
             LOGGER.info("Technique mode configured by -Denchantmentoutline.technique={}: resolved={}",
                     modeFromProperty,
                     currentMode.id());
         }
-        LOGGER.info("Technique manager initialized. activeMode={}, availableModes={}",
-                currentMode.id(),
-                techniques.keySet());
+        if (OutlineDebugFlags.TECHNIQUE) {
+            LOGGER.info("Technique manager initialized. activeMode={}, availableModes={}",
+                    currentMode.id(),
+                    techniques.keySet());
+        }
     }
 
     public static OutlineTechniqueManager getInstance() {
@@ -61,9 +66,20 @@ public final class OutlineTechniqueManager {
         setMode(OutlineTechniqueMode.parseOrDefault(modeText, OutlineTechniqueMode.LEGACY_RADIUS));
     }
 
-    public void process(OutlineTechniqueContext context) {
+    public void process(OutlineTechniqueInput input) {
+        Objects.requireNonNull(input, "input");
         OutlineTechnique technique = techniqueOrFallback(currentMode);
-        technique.process(context);
+        if (OutlineDebugFlags.TECHNIQUE && processDispatchLogCount < 16) {
+            processDispatchLogCount++;
+            LOGGER.info("Dispatch technique: mode={}, impl={}, frame={}, viewport={}x{} ({}/16)",
+                    currentMode.id(),
+                    technique.debugName(),
+                    input.frameData().frameIndex(),
+                    input.frameData().viewportWidth(),
+                    input.frameData().viewportHeight(),
+                    processDispatchLogCount);
+        }
+        technique.process(input);
     }
 
     private OutlineTechnique techniqueOrFallback(OutlineTechniqueMode mode) {

@@ -1,6 +1,6 @@
 package quiet.enchantmentoutline.technique;
 
-import quiet.enchantmentoutline.technique.context.OutlineTechniqueContext;
+import quiet.enchantmentoutline.technique.context.OutlineTechniqueInput;
 
 /**
  * 描边算法统一契约。
@@ -10,6 +10,6 @@ public interface OutlineTechnique {
 
     String debugName();
 
-    void process(OutlineTechniqueContext context);
+    void process(OutlineTechniqueInput input);
 }
 
