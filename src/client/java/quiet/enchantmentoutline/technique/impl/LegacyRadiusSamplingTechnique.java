@@ -24,12 +24,14 @@ import java.util.OptionalInt;
 public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Technique");
     private static int skipLogCount;
+    private static int processLogCount;
 
     private static final RenderPipeline DEPTH_AWARE_OUTLINE_BLIT = RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Identifier.parse("enchantment-outline:pipeline/depth_aware_outline_blit"))
             .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
             .withFragmentShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
-            .withSampler("InSampler")
+            .withSampler("HollowSampler")
+            .withSampler("RawMaskSampler")
             .withSampler("MaskDepthSampler")
             .withSampler("SceneDepthSampler")
             .withBlend(BlendFunction.ENTITY_OUTLINE_BLIT)
@@ -45,18 +47,33 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
     @Override
     public void process(OutlineTechniqueContext context) {
-        RenderTarget source = context.maskTarget();
+        RenderTarget source = context.hollowMaskTarget();
+        RenderTarget rawMaskTarget = context.rawMaskTarget();
         RenderTarget sceneDepthTarget = context.sceneDepthTarget();
-        if (source.getColorTextureView() == null || source.getDepthTextureView() == null || sceneDepthTarget.getDepthTextureView() == null) {
+        if (source.getColorTextureView() == null
+                || rawMaskTarget.getColorTextureView() == null
+                || rawMaskTarget.getDepthTextureView() == null
+                || sceneDepthTarget.getDepthTextureView() == null) {
             if (skipLogCount < 20) {
                 skipLogCount++;
-                LOGGER.info("Skipping legacy composite: colorView={}, maskDepthView={}, sceneDepthView={} ({}/20)",
+                LOGGER.info("Skipping legacy composite: hollowColorView={}, rawColorView={}, maskDepthView={}, sceneDepthView={} ({}/20)",
                         source.getColorTextureView() != null,
-                        source.getDepthTextureView() != null,
+                        rawMaskTarget.getColorTextureView() != null,
+                        rawMaskTarget.getDepthTextureView() != null,
                         sceneDepthTarget.getDepthTextureView() != null,
                         skipLogCount);
             }
             return;
+        }
+
+        if (processLogCount < 16) {
+            processLogCount++;
+            LOGGER.info("Legacy composite pass #{}: hollowColor={}, rawColor={}, rawDepth={}, sceneDepth={}",
+                    processLogCount,
+                    source.getColorTextureView() != null,
+                    rawMaskTarget.getColorTextureView() != null,
+                    rawMaskTarget.getDepthTextureView() != null,
+                    sceneDepthTarget.getDepthTextureView() != null);
         }
 
         try (RenderPass renderPass = RenderSystem.getDevice()
@@ -66,9 +83,11 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
             renderPass.setPipeline(DEPTH_AWARE_OUTLINE_BLIT);
             RenderSystem.bindDefaultUniforms(renderPass);
-            renderPass.bindTexture("InSampler", source.getColorTextureView(),
+            renderPass.bindTexture("HollowSampler", source.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-            renderPass.bindTexture("MaskDepthSampler", source.getDepthTextureView(),
+            renderPass.bindTexture("RawMaskSampler", rawMaskTarget.getColorTextureView(),
+                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+            renderPass.bindTexture("MaskDepthSampler", rawMaskTarget.getDepthTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.bindTexture("SceneDepthSampler", sceneDepthTarget.getDepthTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));

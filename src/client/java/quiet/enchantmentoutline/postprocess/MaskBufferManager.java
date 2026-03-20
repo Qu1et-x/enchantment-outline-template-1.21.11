@@ -17,6 +17,7 @@ public class MaskBufferManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Buffer");
     private static MaskBufferManager instance;
     private RenderTarget maskTarget;
+    private RenderTarget hollowMaskTarget;
     private RenderTarget sceneDepthTarget;
     private int beginFrameCount;
     private int sceneCaptureCount;
@@ -37,16 +38,27 @@ public class MaskBufferManager {
         return maskTarget;
     }
 
+    public RenderTarget getHollowMaskTarget() {
+        if (hollowMaskTarget == null) {
+            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
+        }
+        return hollowMaskTarget;
+    }
+
     public void init(int width, int height) {
         RenderSystem.assertOnRenderThread();
         if (maskTarget != null) {
             maskTarget.destroyBuffers();
+        }
+        if (hollowMaskTarget != null) {
+            hollowMaskTarget.destroyBuffers();
         }
         if (sceneDepthTarget != null) {
             sceneDepthTarget.destroyBuffers();
         }
         LOGGER.info("Initializing mask buffer: {}x{}", width, height);
         maskTarget = new TextureTarget("Enchantment Mask", width, height, true);
+        hollowMaskTarget = new TextureTarget("Enchantment Hollow Mask", width, height, true);
         sceneDepthTarget = new TextureTarget("Enchantment Scene Depth", width, height, true);
     }
 
@@ -56,6 +68,7 @@ public class MaskBufferManager {
     public void beginFrame() {
         RenderSystem.assertOnRenderThread();
         RenderTarget target = getMaskTarget();
+        RenderTarget hollowTarget = getHollowMaskTarget();
         beginFrameCount++;
         if (beginFrameCount <= 8) {
             LOGGER.info("Mask beginFrame #{}, size={}x{}", beginFrameCount, target.width, target.height);
@@ -68,6 +81,15 @@ public class MaskBufferManager {
                         Objects.requireNonNull(target.getColorTexture(), "Mask color texture is not initialized"),
                         0,
                         Objects.requireNonNull(target.getDepthTexture(), "Mask depth texture is not initialized"),
+                        1.0
+                );
+
+        RenderSystem.getDevice()
+                .createCommandEncoder()
+                .clearColorAndDepthTextures(
+                        Objects.requireNonNull(hollowTarget.getColorTexture(), "Hollow mask color texture is not initialized"),
+                        0,
+                        Objects.requireNonNull(hollowTarget.getDepthTexture(), "Hollow mask depth texture is not initialized"),
                         1.0
                 );
     }
@@ -105,6 +127,10 @@ public class MaskBufferManager {
         if (sceneDepthTarget != null) {
             sceneDepthTarget.resize(width, height);
             LOGGER.info("Rescaled scene depth buffer to {}x{}", width, height);
+        }
+        if (hollowMaskTarget != null) {
+            hollowMaskTarget.resize(width, height);
+            LOGGER.info("Rescaled hollow mask buffer to {}x{}", width, height);
         }
     }
 }

@@ -51,6 +51,7 @@ public class OutlinePostProcessor {
         MaskBufferManager.getInstance().drawAndFlush();
         
         RenderTarget maskTarget = MaskBufferManager.getInstance().getMaskTarget();
+        RenderTarget hollowMaskTarget = MaskBufferManager.getInstance().getHollowMaskTarget();
         RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
         RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
         OutlineTechniqueManager techniqueManager = OutlineTechniqueManager.getInstance();
@@ -58,15 +59,17 @@ public class OutlinePostProcessor {
 
         if (processLogCount < 12) {
             processLogCount++;
-            LOGGER.info("Outline process #{}, mode={}, mask={}x{}",
+            LOGGER.info("Outline process #{}, mode={}, mask={}x{}, hollowColorViewReady={}",
                     processLogCount,
                     techniqueManager.getCurrentMode().id(),
                     maskTarget.width,
-                    maskTarget.height);
+                    maskTarget.height,
+                    hollowMaskTarget != null && hollowMaskTarget.getColorTextureView() != null);
         }
         
         // 后处理入口只负责分发，具体算法由 technique 子模块实现。
         if (maskTarget != null && maskTarget.getColorTextureView() != null) {
+            HollowMaskPreprocessor.getInstance().process(maskTarget, hollowMaskTarget);
             OutlineFrameData frameData = new OutlineFrameData(
                     frameCounter,
                     mainTarget.width,
@@ -74,7 +77,13 @@ public class OutlinePostProcessor {
                     Minecraft.getInstance().level != null,
                     SHARED_SETTINGS
             );
-            OutlineTechniqueContext context = new OutlineTechniqueContext(mainTarget, maskTarget, sceneDepthTarget, frameData);
+            OutlineTechniqueContext context = new OutlineTechniqueContext(
+                    mainTarget,
+                    maskTarget,
+                    hollowMaskTarget,
+                    sceneDepthTarget,
+                    frameData
+            );
             techniqueManager.process(context);
         } else if (skipLogCount < 12) {
             skipLogCount++;

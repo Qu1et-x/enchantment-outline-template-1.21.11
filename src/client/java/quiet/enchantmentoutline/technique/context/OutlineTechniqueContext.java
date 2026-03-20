@@ -9,23 +9,38 @@ import java.util.Objects;
  */
 public final class OutlineTechniqueContext {
     private final RenderTarget mainTarget;
-    private final RenderTarget maskTarget;
+    private final RenderTarget rawMaskTarget;
+    private final RenderTarget hollowMaskTarget;
     private final RenderTarget sceneDepthTarget;
     private final OutlineFrameData frameData;
 
     public OutlineTechniqueContext(RenderTarget mainTarget, RenderTarget maskTarget, RenderTarget sceneDepthTarget) {
         this(requireMainTarget(mainTarget),
                 maskTarget,
+                maskTarget,
                 sceneDepthTarget,
                 defaultFrameData(mainTarget));
     }
 
     public OutlineTechniqueContext(RenderTarget mainTarget,
-                                   RenderTarget maskTarget,
+                                   RenderTarget rawMaskTarget,
+                                   RenderTarget hollowMaskTarget,
+                                   RenderTarget sceneDepthTarget) {
+        this(mainTarget,
+                rawMaskTarget,
+                hollowMaskTarget,
+                sceneDepthTarget,
+                defaultFrameData(mainTarget));
+    }
+
+    public OutlineTechniqueContext(RenderTarget mainTarget,
+                                   RenderTarget rawMaskTarget,
+                                   RenderTarget hollowMaskTarget,
                                    RenderTarget sceneDepthTarget,
                                    OutlineFrameData frameData) {
         this.mainTarget = Objects.requireNonNull(mainTarget, "mainTarget");
-        this.maskTarget = Objects.requireNonNull(maskTarget, "maskTarget");
+        this.rawMaskTarget = Objects.requireNonNull(rawMaskTarget, "rawMaskTarget");
+        this.hollowMaskTarget = Objects.requireNonNull(hollowMaskTarget, "hollowMaskTarget");
         this.sceneDepthTarget = Objects.requireNonNull(sceneDepthTarget, "sceneDepthTarget");
         this.frameData = Objects.requireNonNull(frameData, "frameData");
     }
@@ -35,7 +50,15 @@ public final class OutlineTechniqueContext {
     }
 
     public RenderTarget maskTarget() {
-        return maskTarget;
+        return rawMaskTarget;
+    }
+
+    public RenderTarget rawMaskTarget() {
+        return rawMaskTarget;
+    }
+
+    public RenderTarget hollowMaskTarget() {
+        return hollowMaskTarget;
     }
 
     public RenderTarget sceneDepthTarget() {
