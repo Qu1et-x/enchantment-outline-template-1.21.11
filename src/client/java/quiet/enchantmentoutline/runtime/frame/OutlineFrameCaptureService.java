@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.postprocess;
+package quiet.enchantmentoutline.runtime.frame;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -6,11 +6,13 @@ import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
+import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
 
 import java.util.Objects;
 
 /**
- * 帧阶段处理：重置掩码并在手部清深度前捕获场景深度。
+ * 职责描述: 帧阶段处理，负责清理掩码并捕获手部清深度前的场景深度。
+ * 交互映射: 在 GameRendererMixin 帧钩子中调用。
  */
 public final class OutlineFrameCaptureService {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-FrameCapture");

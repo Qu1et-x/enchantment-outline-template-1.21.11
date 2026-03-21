@@ -1,9 +1,9 @@
-package quiet.enchantmentoutline.technique.context;
+package quiet.enchantmentoutline.technique.input;
 
 import java.util.Objects;
 
 /**
- * 每帧稳定输入：算法共享的基础信息，避免各实现直接读全局状态。
+ * 每帧稳定输入容器；合法性由 process 模块在创建前统一保证。
  */
 public final class OutlineFrameData {
     private final int frameIndex;
@@ -19,9 +19,9 @@ public final class OutlineFrameData {
                             int viewportHeight,
                             boolean worldLoaded,
                             OutlineTechniqueSettings settings) {
-        this.frameIndex = Math.max(0, frameIndex);
-        this.viewportWidth = Math.max(1, viewportWidth);
-        this.viewportHeight = Math.max(1, viewportHeight);
+        this.frameIndex = frameIndex;
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
         this.inverseViewportWidth = 1.0F / this.viewportWidth;
         this.inverseViewportHeight = 1.0F / this.viewportHeight;
         this.worldLoaded = worldLoaded;
@@ -56,5 +56,4 @@ public final class OutlineFrameData {
         return settings;
     }
 }
-
 

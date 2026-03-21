@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.technique.preprocess;
+package quiet.enchantmentoutline.process.hollowmask;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -18,9 +18,10 @@ import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import java.util.OptionalInt;
 
 /**
- * 将原始附魔掩码预处理为“已镂空边缘蒙版”，供后续算法统一消费。
+ * 职责描述: 计算 raw mask 的边缘镂空结果，产出 hollow mask。
+ * 交互映射: 由 process.hollowmask 模块调用，不再放在 technique 模块中。
  */
-public final class HollowMaskPreprocessor {
+public final class HollowMaskExtractor {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-HollowMask");
     private static int skipLogCount;
     private static int preprocessLogCount;
@@ -37,14 +38,14 @@ public final class HollowMaskPreprocessor {
             .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
             .build());
 
-    private static HollowMaskPreprocessor instance;
+    private static HollowMaskExtractor instance;
 
-    private HollowMaskPreprocessor() {
+    private HollowMaskExtractor() {
     }
 
-    public static HollowMaskPreprocessor getInstance() {
+    public static HollowMaskExtractor getInstance() {
         if (instance == null) {
-            instance = new HollowMaskPreprocessor();
+            instance = new HollowMaskExtractor();
         }
         return instance;
     }

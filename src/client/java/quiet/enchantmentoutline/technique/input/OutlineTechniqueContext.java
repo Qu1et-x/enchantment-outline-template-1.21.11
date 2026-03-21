@@ -1,11 +1,11 @@
-package quiet.enchantmentoutline.technique.context;
+package quiet.enchantmentoutline.technique.input;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 
 import java.util.Objects;
 
 /**
- * 算法执行上下文，避免算法实现直接依赖外部单例。
+ * 算法执行输入快照，避免算法实现直接依赖外部单例。
  */
 public final class OutlineTechniqueContext implements OutlineTechniqueInput {
     private final RenderTarget mainTarget;
@@ -51,5 +51,4 @@ public final class OutlineTechniqueContext implements OutlineTechniqueInput {
         return frameData;
     }
 }
-
 

@@ -1,7 +1,7 @@
-package quiet.enchantmentoutline.technique.context;
+package quiet.enchantmentoutline.technique.input;
 
 /**
- * 算法共享调参入口：阶段一先统一参数承载，便于后续多算法对齐。
+ * 算法共享参数容器；参数合法化由 process 模块统一负责。
  */
 public final class OutlineTechniqueSettings {
     public static final OutlineTechniqueSettings DEFAULT = new Builder().build();
@@ -38,28 +38,23 @@ public final class OutlineTechniqueSettings {
         private float depthEpsilon = 0.00001F;
 
         public Builder outlineRadiusPixels(int outlineRadiusPixels) {
-            this.outlineRadiusPixels = Math.max(1, outlineRadiusPixels);
+            this.outlineRadiusPixels = outlineRadiusPixels;
             return this;
         }
 
         public Builder alphaThreshold(float alphaThreshold) {
-            this.alphaThreshold = Math.max(0.0F, alphaThreshold);
+            this.alphaThreshold = alphaThreshold;
             return this;
         }
 
         public Builder depthEpsilon(float depthEpsilon) {
-            this.depthEpsilon = Math.max(0.0F, depthEpsilon);
+            this.depthEpsilon = depthEpsilon;
             return this;
         }
 
         public OutlineTechniqueSettings build() {
-            if (!Float.isFinite(alphaThreshold) || !Float.isFinite(depthEpsilon)) {
-                throw new IllegalArgumentException("Threshold values must be finite.");
-            }
             return new OutlineTechniqueSettings(this);
         }
     }
 }
-
-
 

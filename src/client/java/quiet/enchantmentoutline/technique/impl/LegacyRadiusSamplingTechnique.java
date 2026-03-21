@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
-import quiet.enchantmentoutline.technique.context.OutlineTechniqueInput;
+import quiet.enchantmentoutline.technique.input.OutlineTechniqueInput;
 
 import java.util.Objects;
 import java.util.OptionalInt;

@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.postprocess;
+package quiet.enchantmentoutline.runtime.buffer;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 
 /**
- * 职责描述: 管理附魔轮廓掩码 RenderTarget。
- * 交互映射: 每帧重置掩码颜色/深度，供两阶段掩码写入与后处理采样。
+ * 职责描述: 管理附魔轮廓渲染使用的 RenderTarget 生命周期。
+ * 交互映射: 被渲染钩子、采集流程和渲染层配置统一复用。
  */
 public class MaskBufferManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Buffer");
@@ -19,7 +19,8 @@ public class MaskBufferManager {
     private RenderTarget hollowMaskTarget;
     private RenderTarget sceneDepthTarget;
 
-    private MaskBufferManager() {}
+    private MaskBufferManager() {
+    }
 
     public static MaskBufferManager getInstance() {
         if (instance == null) {
@@ -42,6 +43,13 @@ public class MaskBufferManager {
         return hollowMaskTarget;
     }
 
+    public RenderTarget getSceneDepthTarget() {
+        if (sceneDepthTarget == null) {
+            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
+        }
+        return sceneDepthTarget;
+    }
+
     public void init(int width, int height) {
         RenderSystem.assertOnRenderThread();
         if (maskTarget != null) {
@@ -59,13 +67,6 @@ public class MaskBufferManager {
         maskTarget = new TextureTarget("Enchantment Mask", width, height, true);
         hollowMaskTarget = new TextureTarget("Enchantment Hollow Mask", width, height, true);
         sceneDepthTarget = new TextureTarget("Enchantment Scene Depth", width, height, true);
-    }
-
-    public RenderTarget getSceneDepthTarget() {
-        if (sceneDepthTarget == null) {
-            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
-        }
-        return sceneDepthTarget;
     }
 
     public void onRescale(int width, int height) {
@@ -89,3 +90,4 @@ public class MaskBufferManager {
         }
     }
 }
+

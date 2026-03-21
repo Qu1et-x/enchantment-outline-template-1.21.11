@@ -3,7 +3,7 @@ package quiet.enchantmentoutline.technique;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
-import quiet.enchantmentoutline.technique.context.OutlineTechniqueInput;
+import quiet.enchantmentoutline.technique.input.OutlineTechniqueInput;
 import quiet.enchantmentoutline.technique.impl.DelegatingPlaceholderTechnique;
 import quiet.enchantmentoutline.technique.impl.LegacyRadiusSamplingTechnique;
 
@@ -82,6 +82,19 @@ public final class OutlineTechniqueManager {
         technique.process(input);
     }
 
+    public void register(OutlineTechnique technique) {
+        OutlineTechnique safe = Objects.requireNonNull(technique, "technique");
+        OutlineTechnique previous = techniques.put(safe.mode(), safe);
+        if (previous != null && previous != safe) {
+            LOGGER.warn("Technique replaced: mode={}, oldImpl={}, newImpl={}",
+                    safe.mode().id(),
+                    previous.debugName(),
+                    safe.debugName());
+        } else if (OutlineDebugFlags.TECHNIQUE) {
+            LOGGER.info("Technique registered: mode={}, impl={}", safe.mode().id(), safe.debugName());
+        }
+    }
+
     private OutlineTechnique techniqueOrFallback(OutlineTechniqueMode mode) {
         OutlineTechnique technique = techniques.get(mode);
         if (technique != null) {
@@ -101,13 +114,14 @@ public final class OutlineTechniqueManager {
 
     private void registerBuiltins() {
         OutlineTechnique legacy = new LegacyRadiusSamplingTechnique();
-        techniques.put(OutlineTechniqueMode.LEGACY_RADIUS, legacy);
-        techniques.put(OutlineTechniqueMode.JFA,
-                new DelegatingPlaceholderTechnique(OutlineTechniqueMode.JFA, "JfaOutlineTechnique", legacy));
-        techniques.put(OutlineTechniqueMode.BILATERAL_GAUSSIAN,
-                new DelegatingPlaceholderTechnique(OutlineTechniqueMode.BILATERAL_GAUSSIAN, "BilateralGaussianOutlineTechnique", legacy));
-        techniques.put(OutlineTechniqueMode.STENCIL_EXPAND,
-                new DelegatingPlaceholderTechnique(OutlineTechniqueMode.STENCIL_EXPAND, "StencilExpandOutlineTechnique", legacy));
+        register(legacy);
+        registerPlaceholder(OutlineTechniqueMode.JFA, "JfaOutlineTechnique", legacy);
+        registerPlaceholder(OutlineTechniqueMode.BILATERAL_GAUSSIAN, "BilateralGaussianOutlineTechnique", legacy);
+        registerPlaceholder(OutlineTechniqueMode.STENCIL_EXPAND, "StencilExpandOutlineTechnique", legacy);
+    }
+
+    private void registerPlaceholder(OutlineTechniqueMode mode, String debugName, OutlineTechnique fallback) {
+        register(new DelegatingPlaceholderTechnique(mode, debugName, fallback));
     }
 }
 

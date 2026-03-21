@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.render;
+package quiet.enchantmentoutline.runtime.rendering;
 
 import net.minecraft.world.item.ItemDisplayContext;
 
@@ -25,3 +25,4 @@ public final class OutlineRenderContext {
         CURRENT.remove();
     }
 }
+

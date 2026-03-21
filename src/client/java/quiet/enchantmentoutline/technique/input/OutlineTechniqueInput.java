@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.technique.context;
+package quiet.enchantmentoutline.technique.input;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 

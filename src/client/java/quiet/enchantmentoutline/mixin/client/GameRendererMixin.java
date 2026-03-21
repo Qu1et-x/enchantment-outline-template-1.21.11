@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
-import quiet.enchantmentoutline.postprocess.MaskBufferManager;
-import quiet.enchantmentoutline.postprocess.OutlineFrameCaptureService;
-import quiet.enchantmentoutline.postprocess.OutlinePostProcessor;
+import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
+import quiet.enchantmentoutline.runtime.frame.OutlineFrameCaptureService;
+import quiet.enchantmentoutline.runtime.orchestration.OutlineRenderOrchestrator;
 
 /**
  * 职责描述: 注入 GameRenderer 的每一帧渲染流程。
@@ -53,7 +53,7 @@ public class GameRendererMixin {
             POST_HOOK_LOG_COUNT++;
             LOGGER.info("Frame hook before main depth clear: pass={}/20", POST_HOOK_LOG_COUNT);
         }
-        OutlinePostProcessor.getInstance().process();
+        OutlineRenderOrchestrator.getInstance().process();
     }
 
     @Inject(method = "resize", at = @At("RETURN"))

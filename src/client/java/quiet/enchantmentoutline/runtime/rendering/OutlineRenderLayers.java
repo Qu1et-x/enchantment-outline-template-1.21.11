@@ -1,4 +1,4 @@
-package quiet.enchantmentoutline.render;
+package quiet.enchantmentoutline.runtime.rendering;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -15,7 +15,7 @@ import quiet.enchantmentoutline.mixin.client.RenderSetupTextureBindingAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderSetupTexturesAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderTypeAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderTypeStateAccessor;
-import quiet.enchantmentoutline.postprocess.MaskBufferManager;
+import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -182,4 +182,5 @@ public class OutlineRenderLayers {
         );
     }
 }
+
 
