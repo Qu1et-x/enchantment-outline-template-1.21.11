@@ -9,11 +9,13 @@ public final class OutlineTechniqueSettings {
     private final int outlineRadiusPixels;
     private final float alphaThreshold;
     private final float depthEpsilon;
+    private final boolean advancedEffectEnabled;
 
     private OutlineTechniqueSettings(Builder builder) {
         this.outlineRadiusPixels = builder.outlineRadiusPixels;
         this.alphaThreshold = builder.alphaThreshold;
         this.depthEpsilon = builder.depthEpsilon;
+        this.advancedEffectEnabled = builder.advancedEffectEnabled;
     }
 
     public int outlineRadiusPixels() {
@@ -28,6 +30,10 @@ public final class OutlineTechniqueSettings {
         return depthEpsilon;
     }
 
+    public boolean advancedEffectEnabled() {
+        return advancedEffectEnabled;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -36,6 +42,7 @@ public final class OutlineTechniqueSettings {
         private int outlineRadiusPixels = 10;
         private float alphaThreshold = 0.001F;
         private float depthEpsilon = 0.00001F;
+        private boolean advancedEffectEnabled;
 
         public Builder outlineRadiusPixels(int outlineRadiusPixels) {
             this.outlineRadiusPixels = outlineRadiusPixels;
@@ -49,6 +56,11 @@ public final class OutlineTechniqueSettings {
 
         public Builder depthEpsilon(float depthEpsilon) {
             this.depthEpsilon = depthEpsilon;
+            return this;
+        }
+
+        public Builder advancedEffectEnabled(boolean advancedEffectEnabled) {
+            this.advancedEffectEnabled = advancedEffectEnabled;
             return this;
         }
 

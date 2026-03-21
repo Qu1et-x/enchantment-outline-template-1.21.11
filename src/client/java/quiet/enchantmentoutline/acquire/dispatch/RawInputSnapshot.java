@@ -3,8 +3,6 @@ package quiet.enchantmentoutline.acquire.dispatch;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
 
-import java.util.Objects;
-
 /**
  * 职责描述: 承载采集阶段的原始输入快照。
  * 交互映射: 由 RawAcquireDispatcher 创建，交给 process 模块继续处理。
@@ -19,6 +17,7 @@ public final class RawInputSnapshot {
     private final int viewportHeight;
     private final boolean worldLoaded;
     private final OutlineTechniqueSettings settings;
+    private final RawAdvancedFrameData advancedRawData;
 
     public RawInputSnapshot(RenderTarget mainTarget,
                             RenderTarget rawMaskTarget,
@@ -28,16 +27,18 @@ public final class RawInputSnapshot {
                             int viewportWidth,
                             int viewportHeight,
                             boolean worldLoaded,
-                            OutlineTechniqueSettings settings) {
-        this.mainTarget = Objects.requireNonNull(mainTarget, "mainTarget");
-        this.rawMaskTarget = Objects.requireNonNull(rawMaskTarget, "rawMaskTarget");
-        this.hollowMaskTarget = Objects.requireNonNull(hollowMaskTarget, "hollowMaskTarget");
-        this.sceneDepthTarget = Objects.requireNonNull(sceneDepthTarget, "sceneDepthTarget");
-        this.frameIndex = Math.max(0, frameIndex);
-        this.viewportWidth = Math.max(1, viewportWidth);
-        this.viewportHeight = Math.max(1, viewportHeight);
+                            OutlineTechniqueSettings settings,
+                            RawAdvancedFrameData advancedRawData) {
+        this.mainTarget = mainTarget;
+        this.rawMaskTarget = rawMaskTarget;
+        this.hollowMaskTarget = hollowMaskTarget;
+        this.sceneDepthTarget = sceneDepthTarget;
+        this.frameIndex = frameIndex;
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
         this.worldLoaded = worldLoaded;
-        this.settings = Objects.requireNonNull(settings, "settings");
+        this.settings = settings;
+        this.advancedRawData = advancedRawData;
     }
 
     public RenderTarget mainTarget() {
@@ -74,6 +75,10 @@ public final class RawInputSnapshot {
 
     public OutlineTechniqueSettings settings() {
         return settings;
+    }
+
+    public RawAdvancedFrameData advancedRawData() {
+        return advancedRawData;
     }
 }
 

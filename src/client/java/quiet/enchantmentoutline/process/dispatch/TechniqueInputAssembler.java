@@ -45,7 +45,8 @@ public final class TechniqueInputAssembler {
                 snapshot.rawMaskTarget(),
                 snapshot.hollowMaskTarget(),
                 snapshot.sceneDepthTarget(),
-                snapshot.frameData());
+                snapshot.frameData(),
+                snapshot.advancedInput());
     }
 }
 

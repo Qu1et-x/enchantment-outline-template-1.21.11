@@ -1,6 +1,7 @@
 package quiet.enchantmentoutline.runtime.orchestration;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.DeltaTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.acquire.dispatch.RawAcquireDispatcher;
@@ -29,6 +30,7 @@ public final class OutlineRenderOrchestrator {
             .outlineRadiusPixels(Integer.getInteger("enchantmentoutline.radius", 10))
             .alphaThreshold(parsePropertyFloat("enchantmentoutline.alphaThreshold", 0.001F))
             .depthEpsilon(parsePropertyFloat("enchantmentoutline.depthEpsilon", 0.00001F))
+            .advancedEffectEnabled(Boolean.parseBoolean(System.getProperty("enchantmentoutline.advancedInput", "false")))
             .build();
 
     private OutlineRenderOrchestrator() {
@@ -49,12 +51,12 @@ public final class OutlineRenderOrchestrator {
         OutlineTechniqueManager.getInstance().setMode(modeText);
     }
 
-    public void process() {
+    public void process(DeltaTracker deltaTracker) {
         RenderSystem.assertOnRenderThread();
 
         OutlineTechniqueManager techniqueManager = OutlineTechniqueManager.getInstance();
         frameCounter++;
-        RawInputSnapshot rawSnapshot = RawAcquireDispatcher.getInstance().acquire(frameCounter, SHARED_SETTINGS);
+        RawInputSnapshot rawSnapshot = RawAcquireDispatcher.getInstance().acquire(frameCounter, SHARED_SETTINGS, deltaTracker);
 
         if (OutlineDebugFlags.TECHNIQUE && processLogCount < 12) {
             processLogCount++;

@@ -53,7 +53,7 @@ public class GameRendererMixin {
             POST_HOOK_LOG_COUNT++;
             LOGGER.info("Frame hook before main depth clear: pass={}/20", POST_HOOK_LOG_COUNT);
         }
-        OutlineRenderOrchestrator.getInstance().process();
+        OutlineRenderOrchestrator.getInstance().process(deltaTracker);
     }
 
     @Inject(method = "resize", at = @At("RETURN"))

@@ -15,5 +15,7 @@ public interface OutlineTechniqueInput {
     RenderTarget sceneDepthTarget();
 
     OutlineFrameData frameData();
+
+    OutlineAdvancedInput advancedInput();
 }
 

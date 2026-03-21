@@ -1,6 +1,7 @@
 package quiet.enchantmentoutline.process.dispatch;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import quiet.enchantmentoutline.technique.input.OutlineAdvancedInput;
 import quiet.enchantmentoutline.technique.input.OutlineFrameData;
 
 import java.util.Objects;
@@ -15,6 +16,7 @@ public final class ProcessedInputSnapshot {
     private final RenderTarget hollowMaskTarget;
     private final RenderTarget sceneDepthTarget;
     private final OutlineFrameData frameData;
+    private final OutlineAdvancedInput advancedInput;
 
     private ProcessedInputSnapshot(Builder builder) {
         this.mainTarget = Objects.requireNonNull(builder.mainTarget, "mainTarget");
@@ -22,6 +24,7 @@ public final class ProcessedInputSnapshot {
         this.hollowMaskTarget = Objects.requireNonNull(builder.hollowMaskTarget, "hollowMaskTarget");
         this.sceneDepthTarget = Objects.requireNonNull(builder.sceneDepthTarget, "sceneDepthTarget");
         this.frameData = Objects.requireNonNull(builder.frameData, "frameData");
+        this.advancedInput = Objects.requireNonNull(builder.advancedInput, "advancedInput");
     }
 
     public RenderTarget mainTarget() {
@@ -44,12 +47,17 @@ public final class ProcessedInputSnapshot {
         return frameData;
     }
 
+    public OutlineAdvancedInput advancedInput() {
+        return advancedInput;
+    }
+
     public static final class Builder {
         private RenderTarget mainTarget;
         private RenderTarget rawMaskTarget;
         private RenderTarget hollowMaskTarget;
         private RenderTarget sceneDepthTarget;
         private OutlineFrameData frameData;
+        private OutlineAdvancedInput advancedInput = OutlineAdvancedInput.disabled();
 
         public Builder mainTarget(RenderTarget target) {
             this.mainTarget = target;
@@ -73,6 +81,11 @@ public final class ProcessedInputSnapshot {
 
         public Builder frameData(OutlineFrameData frameData) {
             this.frameData = frameData;
+            return this;
+        }
+
+        public Builder advancedInput(OutlineAdvancedInput advancedInput) {
+            this.advancedInput = advancedInput;
             return this;
         }
 

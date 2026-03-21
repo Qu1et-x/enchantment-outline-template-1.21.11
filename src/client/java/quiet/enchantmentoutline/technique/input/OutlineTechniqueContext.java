@@ -13,17 +13,20 @@ public final class OutlineTechniqueContext implements OutlineTechniqueInput {
     private final RenderTarget hollowMaskTarget;
     private final RenderTarget sceneDepthTarget;
     private final OutlineFrameData frameData;
+    private final OutlineAdvancedInput advancedInput;
 
     public OutlineTechniqueContext(RenderTarget mainTarget,
                                    RenderTarget rawMaskTarget,
                                    RenderTarget hollowMaskTarget,
                                    RenderTarget sceneDepthTarget,
-                                   OutlineFrameData frameData) {
+                                   OutlineFrameData frameData,
+                                   OutlineAdvancedInput advancedInput) {
         this.mainTarget = Objects.requireNonNull(mainTarget, "mainTarget");
         this.rawMaskTarget = Objects.requireNonNull(rawMaskTarget, "rawMaskTarget");
         this.hollowMaskTarget = Objects.requireNonNull(hollowMaskTarget, "hollowMaskTarget");
         this.sceneDepthTarget = Objects.requireNonNull(sceneDepthTarget, "sceneDepthTarget");
         this.frameData = Objects.requireNonNull(frameData, "frameData");
+        this.advancedInput = Objects.requireNonNull(advancedInput, "advancedInput");
     }
 
     @Override
@@ -49,6 +52,11 @@ public final class OutlineTechniqueContext implements OutlineTechniqueInput {
     @Override
     public OutlineFrameData frameData() {
         return frameData;
+    }
+
+    @Override
+    public OutlineAdvancedInput advancedInput() {
+        return advancedInput;
     }
 }
 

@@ -6,6 +6,7 @@ import quiet.enchantmentoutline.acquire.dispatch.RawInputSnapshot;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.process.hollowmask.HollowMaskExtractor;
 import quiet.enchantmentoutline.process.validate.TechniqueInputValidateStep;
+import quiet.enchantmentoutline.technique.input.OutlineAdvancedInput;
 import quiet.enchantmentoutline.technique.input.OutlineFrameData;
 import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
 
@@ -49,6 +50,7 @@ public final class ProcessPipelineCoordinator {
         }
 
         OutlineTechniqueSettings normalizedSettings = validateStep.normalizedSettings(raw);
+        OutlineAdvancedInput advancedInput = validateStep.normalizedAdvancedInput(raw, normalizedSettings);
         OutlineFrameData frameData = new OutlineFrameData(
                 validateStep.normalizedFrameIndex(raw),
                 validateStep.normalizedViewportWidth(raw),
@@ -66,6 +68,7 @@ public final class ProcessPipelineCoordinator {
                 .hollowMaskTarget(raw.hollowMaskTarget())
                 .sceneDepthTarget(raw.sceneDepthTarget())
                 .frameData(frameData)
+                .advancedInput(advancedInput)
                 .build();
 
         if (OutlineDebugFlags.TECHNIQUE && processedLogCount < 20) {
