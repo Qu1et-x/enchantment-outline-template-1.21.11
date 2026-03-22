@@ -54,6 +54,12 @@ public final class OutlineTechniqueManager {
         if (mode == null) {
             return;
         }
+        if (!bindings.containsKey(mode)) {
+            LOGGER.warn("Technique mode switch rejected: mode={} has no registered implementation. activeMode={}",
+                    mode.id(),
+                    currentMode.id());
+            return;
+        }
         if (mode == currentMode) {
             return;
         }

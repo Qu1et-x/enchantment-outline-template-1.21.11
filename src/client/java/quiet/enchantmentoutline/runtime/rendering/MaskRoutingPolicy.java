@@ -11,11 +11,14 @@ public final class MaskRoutingPolicy {
     }
 
     public static boolean shouldWriteMask(ItemDisplayContext context) {
-        return context == ItemDisplayContext.GROUND
-                || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+        return context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
                 || context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
-                || context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+                || context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || context == ItemDisplayContext.GROUND
+                // Some special-model submit paths can temporarily lose display context.
+                // Treat NONE as world-branch fallback instead of dropping the mask write.
+                || context == ItemDisplayContext.NONE;
     }
 
     public static OutlineMaskBranch resolveBranch(ItemDisplayContext context) {

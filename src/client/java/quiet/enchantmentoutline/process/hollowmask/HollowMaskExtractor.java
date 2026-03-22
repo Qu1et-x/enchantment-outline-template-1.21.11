@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.OptionalInt;
 
 /**
@@ -26,17 +28,7 @@ public final class HollowMaskExtractor {
     private static int skipLogCount;
     private static int preprocessLogCount;
 
-    private static final RenderPipeline HOLLOW_MASK_EXTRACT_PIPELINE = RenderPipelines.register(RenderPipeline.builder()
-            .withLocation(Identifier.parse("enchantment-outline:pipeline/hollow_mask_extract"))
-            .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
-            .withFragmentShader(Identifier.parse("enchantment-outline:core/hollow_mask_extract"))
-            .withSampler("InSampler")
-            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-            .withDepthWrite(false)
-            .withColorWrite(true, true)
-            .withBlend(BlendFunction.TRANSLUCENT)
-            .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
-            .build());
+    private static final Map<Integer, RenderPipeline> HOLLOW_MASK_EXTRACT_PIPELINES = new HashMap<>();
 
     private static HollowMaskExtractor instance;
 
@@ -50,7 +42,7 @@ public final class HollowMaskExtractor {
         return instance;
     }
 
-    public void process(RenderTarget rawMaskTarget, RenderTarget hollowMaskTarget) {
+    public void process(RenderTarget rawMaskTarget, RenderTarget hollowMaskTarget, int radiusPixels) {
         if (rawMaskTarget.getColorTextureView() == null || hollowMaskTarget.getColorTextureView() == null) {
             if (OutlineDebugFlags.PREPROCESS && skipLogCount < 20) {
                 skipLogCount++;
@@ -76,12 +68,32 @@ public final class HollowMaskExtractor {
                 .createCommandEncoder()
                 .createRenderPass(() -> "Enchantment Hollow Mask Preprocess",
                         hollowMaskTarget.getColorTextureView(), OptionalInt.empty())) {
-            renderPass.setPipeline(HOLLOW_MASK_EXTRACT_PIPELINE);
+            renderPass.setPipeline(hollowMaskPipeline(radiusPixels));
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.bindTexture("InSampler", rawMaskTarget.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.draw(0, 3);
         }
+    }
+
+    private static RenderPipeline hollowMaskPipeline(int radiusPixels) {
+        int radius = Math.max(1, radiusPixels);
+        return HOLLOW_MASK_EXTRACT_PIPELINES.computeIfAbsent(radius, HollowMaskExtractor::buildHollowMaskPipeline);
+    }
+
+    private static RenderPipeline buildHollowMaskPipeline(int radius) {
+        return RenderPipelines.register(RenderPipeline.builder()
+                .withLocation(Identifier.parse("enchantment-outline:pipeline/hollow_mask_extract_r" + radius))
+                .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
+                .withFragmentShader(Identifier.parse("enchantment-outline:core/hollow_mask_extract"))
+                .withSampler("InSampler")
+                .withShaderDefine("OUTLINE_RADIUS_PIXELS", radius)
+                .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                .withDepthWrite(false)
+                .withColorWrite(true, true)
+                .withBlend(BlendFunction.TRANSLUCENT)
+                .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+                .build());
     }
 }
 

@@ -4,7 +4,9 @@ uniform sampler2D InSampler;
 
 out vec4 fragColor;
 
-const int OUTLINE_RADIUS_PIXELS = 10;
+#ifndef OUTLINE_RADIUS_PIXELS
+#define OUTLINE_RADIUS_PIXELS 10
+#endif
 
 vec4 eo_pick_max_alpha_neighbor(ivec2 pixel) {
     vec4 bestColor = vec4(0.0);

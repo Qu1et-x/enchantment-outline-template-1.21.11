@@ -55,7 +55,7 @@ public final class ProcessPipelineCoordinator {
         ProcessNormalizationResult normalized = normalizeStep.execute(raw, validateStep);
 
         // 统一处理 hollow mask，保证算法层拿到的是稳定输入。
-        hollowMaskStep.execute(raw);
+        hollowMaskStep.execute(raw, normalized.frameData().settings());
 
         ProcessedInputSnapshot snapshot = buildSnapshotStep.execute(raw, normalized);
 
