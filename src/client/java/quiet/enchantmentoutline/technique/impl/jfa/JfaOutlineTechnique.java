@@ -27,13 +27,13 @@ import java.util.OptionalInt;
  *
  * Current status:
  * - Core JFA seed/jump/composite pipeline implemented.
- * - Not wired into manager registration yet (intentional, staged rollout).
+ * - Wired into manager registration and used as the default startup mode.
  */
 public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
     private static final Identifier FULLSCREEN_VERTEX = Identifier.parse("enchantment-outline:core/depth_aware_blit");
     private static final Identifier JFA_SEED_FRAGMENT = Identifier.parse("enchantment-outline:core/jfa_seed");
     private static final Identifier JFA_JUMP_FRAGMENT = Identifier.parse("enchantment-outline:core/jfa_jump");
-    private static final Identifier JFA_COMPOSITE_FRAGMENT = Identifier.parse("enchantment-outline:core/jfa_composite");
+    private static final Identifier JFA_COMPOSITE_FRAGMENT = Identifier.parse("enchantment-outline:core/outline_composite_shared");
 
     private static final RenderPipeline JFA_SEED_PIPELINE = RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Identifier.parse("enchantment-outline:pipeline/jfa_seed"))
@@ -144,6 +144,8 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.bindTexture("HollowSampler", hollowMaskTarget.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+            renderPass.bindTexture("RawMaskSampler", rawMaskTarget.getColorTextureView(),
+                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.bindTexture("JfaFieldSampler", jfaFieldTarget.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.bindTexture("MaskDepthSampler", rawMaskTarget.getDepthTextureView(),
@@ -193,9 +195,11 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
                 .withVertexShader(FULLSCREEN_VERTEX)
                 .withFragmentShader(JFA_COMPOSITE_FRAGMENT)
                 .withSampler("HollowSampler")
+                .withSampler("RawMaskSampler")
                 .withSampler("JfaFieldSampler")
                 .withSampler("MaskDepthSampler")
                 .withSampler("SceneDepthSampler")
+                .withShaderDefine("JFA_EDGE")
                 .withShaderDefine("OUTLINE_RADIUS", radius)
                 .withShaderDefine("ALPHA_THRESHOLD", alphaThreshold)
                 .withShaderDefine("DEPTH_EPSILON", depthEpsilon)
