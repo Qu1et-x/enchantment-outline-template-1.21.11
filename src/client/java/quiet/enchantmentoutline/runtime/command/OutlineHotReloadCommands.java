@@ -92,14 +92,12 @@ public final class OutlineHotReloadCommands {
                         String mode = OutlineTechniqueManager.getInstance().getCurrentMode().id();
                         int radius = orchestrator.currentSettings().outlineRadiusPixels();
                         float glow = orchestrator.currentSettings().outlineGlow();
-                        float r = orchestrator.currentSettings().outlineColorRed();
-                        float g = orchestrator.currentSettings().outlineColorGreen();
-                        float b = orchestrator.currentSettings().outlineColorBlue();
+                        float[] rgb = orchestrator.currentSettings().outlineColorRgb();
                         float mix = orchestrator.currentSettings().outlineColorMix();
                         context.getSource().sendFeedback(Component.literal("[EO] mode=" + mode
                                 + ", radius=" + radius
                                 + ", glow=" + glow
-                                + ", color=(" + r + "," + g + "," + b + ")"
+                                + ", color=[" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "]"
                                 + ", mix=" + mix));
                         return 1;
                     }));

@@ -30,9 +30,10 @@ public final class OutlineRenderOrchestrator {
             .outlineRadiusPixels(Integer.getInteger("enchantmentoutline.radius", 10))
             .alphaThreshold(parsePropertyFloat("enchantmentoutline.alphaThreshold", 0.001F))
             .depthEpsilon(parsePropertyFloat("enchantmentoutline.depthEpsilon", 0.00001F))
-            .outlineColorRed(parsePropertyFloat("enchantmentoutline.colorR", 1.0F))
-            .outlineColorGreen(parsePropertyFloat("enchantmentoutline.colorG", 1.0F))
-            .outlineColorBlue(parsePropertyFloat("enchantmentoutline.colorB", 1.0F))
+            .outlineColorRgb(
+                    parsePropertyFloat("enchantmentoutline.colorR", 1.0F),
+                    parsePropertyFloat("enchantmentoutline.colorG", 1.0F),
+                    parsePropertyFloat("enchantmentoutline.colorB", 1.0F))
             .outlineColorMix(parsePropertyFloat("enchantmentoutline.colorMix", 0.0F))
             .outlineGlow(parsePropertyFloat("enchantmentoutline.glow", 1.0F))
             .advancedEffectEnabled(Boolean.parseBoolean(System.getProperty("enchantmentoutline.advancedInput", "false")))
@@ -66,9 +67,7 @@ public final class OutlineRenderOrchestrator {
 
     public void setOutlineColor(float red, float green, float blue, float mix) {
         currentSettings = copySettings(currentSettings)
-                .outlineColorRed(clamp01(red))
-                .outlineColorGreen(clamp01(green))
-                .outlineColorBlue(clamp01(blue))
+                .outlineColorRgb(clamp01(red), clamp01(green), clamp01(blue))
                 .outlineColorMix(clamp01(mix))
                 .build();
     }
@@ -139,9 +138,7 @@ public final class OutlineRenderOrchestrator {
                 .outlineRadiusPixels(source.outlineRadiusPixels())
                 .alphaThreshold(source.alphaThreshold())
                 .depthEpsilon(source.depthEpsilon())
-                .outlineColorRed(source.outlineColorRed())
-                .outlineColorGreen(source.outlineColorGreen())
-                .outlineColorBlue(source.outlineColorBlue())
+                .outlineColorRgb(source.outlineColorRgb())
                 .outlineColorMix(source.outlineColorMix())
                 .outlineGlow(source.outlineGlow())
                 .advancedEffectEnabled(source.advancedEffectEnabled());

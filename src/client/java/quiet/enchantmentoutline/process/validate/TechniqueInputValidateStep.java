@@ -57,13 +57,15 @@ public final class TechniqueInputValidateStep {
 
     public OutlineTechniqueSettings normalizedSettings(RawInputSnapshot raw) {
         OutlineTechniqueSettings source = raw.settings() == null ? OutlineTechniqueSettings.DEFAULT : raw.settings();
+        float[] rgb = source.outlineColorRgb();
         return OutlineTechniqueSettings.builder()
                 .outlineRadiusPixels(Math.max(1, source.outlineRadiusPixels()))
                 .alphaThreshold(Math.max(0.0F, source.alphaThreshold()))
                 .depthEpsilon(Math.max(0.0F, source.depthEpsilon()))
-                .outlineColorRed(clamp01(source.outlineColorRed()))
-                .outlineColorGreen(clamp01(source.outlineColorGreen()))
-                .outlineColorBlue(clamp01(source.outlineColorBlue()))
+                .outlineColorRgb(
+                        clamp01(rgb[0]),
+                        clamp01(rgb[1]),
+                        clamp01(rgb[2]))
                 .outlineColorMix(clamp01(source.outlineColorMix()))
                 .outlineGlow(clampGlow(source.outlineGlow()))
                 .advancedEffectEnabled(source.advancedEffectEnabled())
@@ -100,11 +102,12 @@ public final class TechniqueInputValidateStep {
         if (settings == null) {
             return true;
         }
+        float[] rgb = settings.outlineColorRgb();
         return Float.isFinite(settings.alphaThreshold())
                 && Float.isFinite(settings.depthEpsilon())
-                && Float.isFinite(settings.outlineColorRed())
-                && Float.isFinite(settings.outlineColorGreen())
-                && Float.isFinite(settings.outlineColorBlue())
+                && Float.isFinite(rgb[0])
+                && Float.isFinite(rgb[1])
+                && Float.isFinite(rgb[2])
                 && Float.isFinite(settings.outlineColorMix())
                 && Float.isFinite(settings.outlineGlow());
     }
