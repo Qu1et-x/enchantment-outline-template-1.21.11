@@ -39,10 +39,6 @@ out vec4 fragColor;
 #define OUTLINE_COLOR_MIX 0.0
 #endif
 
-#ifndef OUTLINE_GLOW
-#define OUTLINE_GLOW 1.0
-#endif
-
 const float MIN_OUTPUT_ALPHA = 0.6;
 
 bool eo_compute_edge(ivec2 pixel, out vec3 edgeColor, out float edgeAlpha) {
@@ -137,10 +133,7 @@ void main() {
     vec3 customColor = vec3(OUTLINE_COLOR_R, OUTLINE_COLOR_G, OUTLINE_COLOR_B);
     vec3 finalColor = mix(edgeColor, customColor, colorMix);
 
-    float glow = max(0.0, OUTLINE_GLOW);
-    float boostedAlpha = edgeAlpha * max(1.0, glow);
-    float floorAlpha = MIN_OUTPUT_ALPHA * max(1.0, glow * 0.5);
-    float finalAlpha = clamp(max(boostedAlpha, floorAlpha), 0.0, 1.0);
+    float finalAlpha = clamp(max(edgeAlpha, MIN_OUTPUT_ALPHA), 0.0, 1.0);
 
     fragColor = vec4(finalColor, finalAlpha);
 }

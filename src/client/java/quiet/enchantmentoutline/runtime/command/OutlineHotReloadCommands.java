@@ -75,28 +75,15 @@ public final class OutlineHotReloadCommands {
             colorNode.then(colorR);
             root.then(colorNode);
 
-            root.then(ClientCommandManager.literal("glow")
-                    .then(ClientCommandManager.argument("strength", FloatArgumentType.floatArg(0.0F, 4.0F))
-                            .executes(context -> {
-                                float glow = FloatArgumentType.getFloat(context, "strength");
-                                OutlineRenderOrchestrator orchestrator = OutlineRenderOrchestrator.getInstance();
-                                orchestrator.setOutlineGlow(glow);
-                                float activeGlow = orchestrator.currentSettings().outlineGlow();
-                                context.getSource().sendFeedback(Component.literal("[EO] glow set to: " + activeGlow));
-                                return 1;
-                            })));
-
             root.then(ClientCommandManager.literal("status")
                     .executes(context -> {
                         OutlineRenderOrchestrator orchestrator = OutlineRenderOrchestrator.getInstance();
                         String mode = OutlineTechniqueManager.getInstance().getCurrentMode().id();
                         int radius = orchestrator.currentSettings().outlineRadiusPixels();
-                        float glow = orchestrator.currentSettings().outlineGlow();
                         float[] rgb = orchestrator.currentSettings().outlineColorRgb();
                         float mix = orchestrator.currentSettings().outlineColorMix();
                         context.getSource().sendFeedback(Component.literal("[EO] mode=" + mode
                                 + ", radius=" + radius
-                                + ", glow=" + glow
                                 + ", color=[" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "]"
                                 + ", mix=" + mix));
                         return 1;

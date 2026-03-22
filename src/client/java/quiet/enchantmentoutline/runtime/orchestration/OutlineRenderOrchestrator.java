@@ -35,7 +35,6 @@ public final class OutlineRenderOrchestrator {
                     parsePropertyFloat("enchantmentoutline.colorG", 1.0F),
                     parsePropertyFloat("enchantmentoutline.colorB", 1.0F))
             .outlineColorMix(parsePropertyFloat("enchantmentoutline.colorMix", 0.0F))
-            .outlineGlow(parsePropertyFloat("enchantmentoutline.glow", 1.0F))
             .advancedEffectEnabled(Boolean.parseBoolean(System.getProperty("enchantmentoutline.advancedInput", "false")))
             .build();
 
@@ -69,12 +68,6 @@ public final class OutlineRenderOrchestrator {
         currentSettings = copySettings(currentSettings)
                 .outlineColorRgb(clamp01(red), clamp01(green), clamp01(blue))
                 .outlineColorMix(clamp01(mix))
-                .build();
-    }
-
-    public void setOutlineGlow(float glow) {
-        currentSettings = copySettings(currentSettings)
-                .outlineGlow(clampGlow(glow))
                 .build();
     }
 
@@ -140,7 +133,6 @@ public final class OutlineRenderOrchestrator {
                 .depthEpsilon(source.depthEpsilon())
                 .outlineColorRgb(source.outlineColorRgb())
                 .outlineColorMix(source.outlineColorMix())
-                .outlineGlow(source.outlineGlow())
                 .advancedEffectEnabled(source.advancedEffectEnabled());
     }
 
@@ -154,14 +146,5 @@ public final class OutlineRenderOrchestrator {
         return value;
     }
 
-    private static float clampGlow(float value) {
-        if (value < 0.0F) {
-            return 0.0F;
-        }
-        if (value > 4.0F) {
-            return 4.0F;
-        }
-        return value;
-    }
 }
 

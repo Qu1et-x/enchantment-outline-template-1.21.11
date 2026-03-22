@@ -67,7 +67,6 @@ public final class TechniqueInputValidateStep {
                         clamp01(rgb[1]),
                         clamp01(rgb[2]))
                 .outlineColorMix(clamp01(source.outlineColorMix()))
-                .outlineGlow(clampGlow(source.outlineGlow()))
                 .advancedEffectEnabled(source.advancedEffectEnabled())
                 .build();
     }
@@ -108,8 +107,7 @@ public final class TechniqueInputValidateStep {
                 && Float.isFinite(rgb[0])
                 && Float.isFinite(rgb[1])
                 && Float.isFinite(rgb[2])
-                && Float.isFinite(settings.outlineColorMix())
-                && Float.isFinite(settings.outlineGlow());
+                && Float.isFinite(settings.outlineColorMix());
     }
 
     private static boolean isFinite(RawAdvancedFrameData data) {
@@ -145,14 +143,5 @@ public final class TechniqueInputValidateStep {
         return value;
     }
 
-    private static float clampGlow(float value) {
-        if (value < 0.0F) {
-            return 0.0F;
-        }
-        if (value > 4.0F) {
-            return 4.0F;
-        }
-        return value;
-    }
 }
 

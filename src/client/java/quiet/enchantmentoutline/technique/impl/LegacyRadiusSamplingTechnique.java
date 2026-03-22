@@ -112,24 +112,22 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
         int radius = Math.max(1, settings.outlineRadiusPixels());
         int alphaScaled = Math.max(0, Math.round(settings.alphaThreshold() * 10000.0F));
         int depthScaled = Math.max(0, Math.round(settings.depthEpsilon() * 1000000.0F));
-        int glowScaled = Math.max(0, Math.round(settings.outlineGlow() * 1000.0F));
         int colorRScaled = Math.max(0, Math.round(settings.outlineColorRed() * 255.0F));
         int colorGScaled = Math.max(0, Math.round(settings.outlineColorGreen() * 255.0F));
         int colorBScaled = Math.max(0, Math.round(settings.outlineColorBlue() * 255.0F));
         int colorMixScaled = Math.max(0, Math.round(settings.outlineColorMix() * 1000.0F));
 
         String key = radius + "_" + alphaScaled + "_" + depthScaled + "_"
-                + glowScaled + "_" + colorRScaled + "_" + colorGScaled + "_" + colorBScaled + "_" + colorMixScaled;
+                + colorRScaled + "_" + colorGScaled + "_" + colorBScaled + "_" + colorMixScaled;
         return LEGACY_PIPELINES.computeIfAbsent(
                 key,
-                ignored -> buildLegacyPipeline(settings, radius, alphaScaled, depthScaled, glowScaled, colorRScaled, colorGScaled, colorBScaled, colorMixScaled));
+                ignored -> buildLegacyPipeline(settings, radius, alphaScaled, depthScaled, colorRScaled, colorGScaled, colorBScaled, colorMixScaled));
     }
 
     private static RenderPipeline buildLegacyPipeline(OutlineTechniqueSettings settings,
                                                       int radius,
                                                       int alphaScaled,
                                                       int depthScaled,
-                                                      int glowScaled,
                                                       int colorRScaled,
                                                       int colorGScaled,
                                                       int colorBScaled,
@@ -138,7 +136,6 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
                 .withLocation(Identifier.parse("enchantment-outline:pipeline/depth_aware_outline_blit_r" + radius
                         + "_a" + alphaScaled
                         + "_d" + depthScaled
-                        + "_g" + glowScaled
                         + "_cr" + colorRScaled
                         + "_cg" + colorGScaled
                         + "_cb" + colorBScaled
@@ -157,7 +154,6 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
                 .withShaderDefine("OUTLINE_COLOR_G", settings.outlineColorGreen())
                 .withShaderDefine("OUTLINE_COLOR_B", settings.outlineColorBlue())
                 .withShaderDefine("OUTLINE_COLOR_MIX", settings.outlineColorMix())
-                .withShaderDefine("OUTLINE_GLOW", settings.outlineGlow())
                 .withBlend(BlendFunction.ENTITY_OUTLINE_BLIT)
                 .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
                 .withDepthWrite(false)

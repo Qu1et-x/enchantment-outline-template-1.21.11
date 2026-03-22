@@ -11,7 +11,6 @@ public final class OutlineTechniqueSettings {
     private final float depthEpsilon;
     private final float[] outlineColorRgb;
     private final float outlineColorMix;
-    private final float outlineGlow;
     private final boolean advancedEffectEnabled;
 
     private OutlineTechniqueSettings(Builder builder) {
@@ -24,7 +23,6 @@ public final class OutlineTechniqueSettings {
                 builder.outlineColorRgb[2]
         };
         this.outlineColorMix = builder.outlineColorMix;
-        this.outlineGlow = builder.outlineGlow;
         this.advancedEffectEnabled = builder.advancedEffectEnabled;
     }
 
@@ -60,10 +58,6 @@ public final class OutlineTechniqueSettings {
         return outlineColorMix;
     }
 
-    public float outlineGlow() {
-        return outlineGlow;
-    }
-
     public boolean advancedEffectEnabled() {
         return advancedEffectEnabled;
     }
@@ -78,7 +72,6 @@ public final class OutlineTechniqueSettings {
         private float depthEpsilon = 0.00001F;
         private final float[] outlineColorRgb = new float[]{1.0F, 1.0F, 1.0F};
         private float outlineColorMix = 0.0F;
-        private float outlineGlow = 1.0F;
         private boolean advancedEffectEnabled;
 
         public Builder outlineRadiusPixels(int outlineRadiusPixels) {
@@ -130,11 +123,6 @@ public final class OutlineTechniqueSettings {
 
         public Builder outlineColorMix(float outlineColorMix) {
             this.outlineColorMix = outlineColorMix;
-            return this;
-        }
-
-        public Builder outlineGlow(float outlineGlow) {
-            this.outlineGlow = outlineGlow;
             return this;
         }
 

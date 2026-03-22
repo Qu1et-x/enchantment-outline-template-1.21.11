@@ -179,13 +179,12 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
         int radius = Math.max(1, settings.outlineRadiusPixels());
         int alphaScaled = Math.max(0, Math.round(settings.alphaThreshold() * 10000.0F));
         int depthScaled = Math.max(0, Math.round(settings.depthEpsilon() * 1000000.0F));
-        int glowScaled = Math.max(0, Math.round(settings.outlineGlow() * 1000.0F));
         int colorRScaled = Math.max(0, Math.round(settings.outlineColorRed() * 255.0F));
         int colorGScaled = Math.max(0, Math.round(settings.outlineColorGreen() * 255.0F));
         int colorBScaled = Math.max(0, Math.round(settings.outlineColorBlue() * 255.0F));
         int colorMixScaled = Math.max(0, Math.round(settings.outlineColorMix() * 1000.0F));
         String key = radius + "_" + alphaScaled + "_" + depthScaled + "_"
-                + glowScaled + "_" + colorRScaled + "_" + colorGScaled + "_" + colorBScaled + "_" + colorMixScaled;
+                + colorRScaled + "_" + colorGScaled + "_" + colorBScaled + "_" + colorMixScaled;
         return JFA_COMPOSITE_PIPELINES.computeIfAbsent(
                 key,
                 ignored -> buildCompositePipeline(
@@ -196,10 +195,8 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
                         settings.outlineColorGreen(),
                         settings.outlineColorBlue(),
                         settings.outlineColorMix(),
-                        settings.outlineGlow(),
                         alphaScaled,
                         depthScaled,
-                        glowScaled,
                         colorRScaled,
                         colorGScaled,
                         colorBScaled,
@@ -213,10 +210,8 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
                                                          float colorG,
                                                          float colorB,
                                                          float colorMix,
-                                                         float glow,
                                                          int alphaScaled,
                                                          int depthScaled,
-                                                         int glowScaled,
                                                          int colorRScaled,
                                                          int colorGScaled,
                                                          int colorBScaled,
@@ -225,7 +220,6 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
                 .withLocation(Identifier.parse("enchantment-outline:pipeline/jfa_composite_r" + radius
                         + "_a" + alphaScaled
                         + "_d" + depthScaled
-                        + "_g" + glowScaled
                         + "_cr" + colorRScaled
                         + "_cg" + colorGScaled
                         + "_cb" + colorBScaled
@@ -245,7 +239,6 @@ public final class JfaOutlineTechnique extends AbstractOutlineTechnique {
                 .withShaderDefine("OUTLINE_COLOR_G", colorG)
                 .withShaderDefine("OUTLINE_COLOR_B", colorB)
                 .withShaderDefine("OUTLINE_COLOR_MIX", colorMix)
-                .withShaderDefine("OUTLINE_GLOW", glow)
                 .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
                 .withDepthWrite(false)
                 .withColorWrite(true, false)
