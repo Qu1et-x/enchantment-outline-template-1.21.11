@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.acquire.dispatch.RawInputSnapshot;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
-import quiet.enchantmentoutline.process.hollowmask.HollowMaskExtractor;
+import quiet.enchantmentoutline.process.step.ProcessBuildSnapshotStep;
+import quiet.enchantmentoutline.process.step.ProcessHollowMaskStep;
+import quiet.enchantmentoutline.process.step.ProcessNormalizationResult;
+import quiet.enchantmentoutline.process.step.ProcessNormalizeStep;
 import quiet.enchantmentoutline.process.validate.TechniqueInputValidateStep;
-import quiet.enchantmentoutline.technique.input.OutlineAdvancedInput;
-import quiet.enchantmentoutline.technique.input.OutlineFrameData;
-import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
 
 import java.util.Objects;
 
@@ -22,6 +22,9 @@ public final class ProcessPipelineCoordinator {
     private static ProcessPipelineCoordinator instance;
 
     private final TechniqueInputValidateStep validateStep = new TechniqueInputValidateStep();
+    private final ProcessNormalizeStep normalizeStep = new ProcessNormalizeStep();
+    private final ProcessHollowMaskStep hollowMaskStep = new ProcessHollowMaskStep();
+    private final ProcessBuildSnapshotStep buildSnapshotStep = new ProcessBuildSnapshotStep();
 
     private int processedLogCount;
     private int skipLogCount;
@@ -49,31 +52,12 @@ public final class ProcessPipelineCoordinator {
             return null;
         }
 
-        OutlineTechniqueSettings normalizedSettings = validateStep.normalizedSettings(raw);
-        OutlineAdvancedInput advancedInput = validateStep.normalizedAdvancedInput(raw, normalizedSettings);
-        OutlineFrameData frameData = new OutlineFrameData(
-                validateStep.normalizedFrameIndex(raw),
-                validateStep.normalizedViewportWidth(raw),
-                validateStep.normalizedViewportHeight(raw),
-                raw.worldLoaded(),
-                normalizedSettings
-        );
+        ProcessNormalizationResult normalized = normalizeStep.execute(raw, validateStep);
 
         // 统一处理 hollow mask，保证算法层拿到的是稳定输入。
-        HollowMaskExtractor.getInstance().process(raw.worldRawMaskTarget(), raw.worldHollowMaskTarget());
-        HollowMaskExtractor.getInstance().process(raw.firstPersonRawMaskTarget(), raw.firstPersonHollowMaskTarget());
+        hollowMaskStep.execute(raw);
 
-        ProcessedInputSnapshot snapshot = new ProcessedInputSnapshot.Builder()
-                .mainTarget(raw.mainTarget())
-                .worldRawMaskTarget(raw.worldRawMaskTarget())
-                .firstPersonRawMaskTarget(raw.firstPersonRawMaskTarget())
-                .worldHollowMaskTarget(raw.worldHollowMaskTarget())
-                .firstPersonHollowMaskTarget(raw.firstPersonHollowMaskTarget())
-                .worldSceneDepthTarget(raw.worldSceneDepthTarget())
-                .firstPersonSceneDepthTarget(raw.firstPersonSceneDepthTarget())
-                .frameData(frameData)
-                .advancedInput(advancedInput)
-                .build();
+        ProcessedInputSnapshot snapshot = buildSnapshotStep.execute(raw, normalized);
 
         if (OutlineDebugFlags.TECHNIQUE && processedLogCount < 20) {
             processedLogCount++;

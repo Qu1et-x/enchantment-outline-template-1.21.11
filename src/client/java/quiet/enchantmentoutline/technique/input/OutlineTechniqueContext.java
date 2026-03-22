@@ -9,68 +9,36 @@ import java.util.Objects;
  */
 public final class OutlineTechniqueContext implements OutlineTechniqueInput {
     private final RenderTarget mainTarget;
-    private final RenderTarget worldRawMaskTarget;
-    private final RenderTarget firstPersonRawMaskTarget;
-    private final RenderTarget worldHollowMaskTarget;
-    private final RenderTarget firstPersonHollowMaskTarget;
-    private final RenderTarget worldSceneDepthTarget;
-    private final RenderTarget firstPersonSceneDepthTarget;
+    private final BranchRenderTargets worldBranch;
+    private final BranchRenderTargets firstPersonBranch;
     private final OutlineFrameData frameData;
     private final OutlineAdvancedInput advancedInput;
 
     public OutlineTechniqueContext(RenderTarget mainTarget,
-                                   RenderTarget worldRawMaskTarget,
-                                   RenderTarget firstPersonRawMaskTarget,
-                                   RenderTarget worldHollowMaskTarget,
-                                   RenderTarget firstPersonHollowMaskTarget,
-                                   RenderTarget worldSceneDepthTarget,
-                                   RenderTarget firstPersonSceneDepthTarget,
+                                   BranchRenderTargets worldBranch,
+                                   BranchRenderTargets firstPersonBranch,
                                    OutlineFrameData frameData,
                                    OutlineAdvancedInput advancedInput) {
         this.mainTarget = Objects.requireNonNull(mainTarget, "mainTarget");
-        this.worldRawMaskTarget = Objects.requireNonNull(worldRawMaskTarget, "worldRawMaskTarget");
-        this.firstPersonRawMaskTarget = Objects.requireNonNull(firstPersonRawMaskTarget, "firstPersonRawMaskTarget");
-        this.worldHollowMaskTarget = Objects.requireNonNull(worldHollowMaskTarget, "worldHollowMaskTarget");
-        this.firstPersonHollowMaskTarget = Objects.requireNonNull(firstPersonHollowMaskTarget, "firstPersonHollowMaskTarget");
-        this.worldSceneDepthTarget = Objects.requireNonNull(worldSceneDepthTarget, "worldSceneDepthTarget");
-        this.firstPersonSceneDepthTarget = Objects.requireNonNull(firstPersonSceneDepthTarget, "firstPersonSceneDepthTarget");
+        this.worldBranch = Objects.requireNonNull(worldBranch, "worldBranch");
+        this.firstPersonBranch = Objects.requireNonNull(firstPersonBranch, "firstPersonBranch");
         this.frameData = Objects.requireNonNull(frameData, "frameData");
         this.advancedInput = Objects.requireNonNull(advancedInput, "advancedInput");
     }
 
     @Override
+    public BranchRenderTargets worldBranch() {
+        return worldBranch;
+    }
+
+    @Override
+    public BranchRenderTargets firstPersonBranch() {
+        return firstPersonBranch;
+    }
+
+    @Override
     public RenderTarget mainTarget() {
         return mainTarget;
-    }
-
-    @Override
-    public RenderTarget worldRawMaskTarget() {
-        return worldRawMaskTarget;
-    }
-
-    @Override
-    public RenderTarget firstPersonRawMaskTarget() {
-        return firstPersonRawMaskTarget;
-    }
-
-    @Override
-    public RenderTarget worldHollowMaskTarget() {
-        return worldHollowMaskTarget;
-    }
-
-    @Override
-    public RenderTarget firstPersonHollowMaskTarget() {
-        return firstPersonHollowMaskTarget;
-    }
-
-    @Override
-    public RenderTarget worldSceneDepthTarget() {
-        return worldSceneDepthTarget;
-    }
-
-    @Override
-    public RenderTarget firstPersonSceneDepthTarget() {
-        return firstPersonSceneDepthTarget;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package quiet.enchantmentoutline.process.dispatch;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import quiet.enchantmentoutline.technique.input.BranchRenderTargets;
 import quiet.enchantmentoutline.technique.input.OutlineAdvancedInput;
 import quiet.enchantmentoutline.technique.input.OutlineFrameData;
 
@@ -12,23 +13,15 @@ import java.util.Objects;
  */
 public final class ProcessedInputSnapshot {
     private final RenderTarget mainTarget;
-    private final RenderTarget worldRawMaskTarget;
-    private final RenderTarget firstPersonRawMaskTarget;
-    private final RenderTarget worldHollowMaskTarget;
-    private final RenderTarget firstPersonHollowMaskTarget;
-    private final RenderTarget worldSceneDepthTarget;
-    private final RenderTarget firstPersonSceneDepthTarget;
+    private final BranchRenderTargets worldBranch;
+    private final BranchRenderTargets firstPersonBranch;
     private final OutlineFrameData frameData;
     private final OutlineAdvancedInput advancedInput;
 
     private ProcessedInputSnapshot(Builder builder) {
         this.mainTarget = Objects.requireNonNull(builder.mainTarget, "mainTarget");
-        this.worldRawMaskTarget = Objects.requireNonNull(builder.worldRawMaskTarget, "worldRawMaskTarget");
-        this.firstPersonRawMaskTarget = Objects.requireNonNull(builder.firstPersonRawMaskTarget, "firstPersonRawMaskTarget");
-        this.worldHollowMaskTarget = Objects.requireNonNull(builder.worldHollowMaskTarget, "worldHollowMaskTarget");
-        this.firstPersonHollowMaskTarget = Objects.requireNonNull(builder.firstPersonHollowMaskTarget, "firstPersonHollowMaskTarget");
-        this.worldSceneDepthTarget = Objects.requireNonNull(builder.worldSceneDepthTarget, "worldSceneDepthTarget");
-        this.firstPersonSceneDepthTarget = Objects.requireNonNull(builder.firstPersonSceneDepthTarget, "firstPersonSceneDepthTarget");
+        this.worldBranch = Objects.requireNonNull(builder.worldBranch, "worldBranch");
+        this.firstPersonBranch = Objects.requireNonNull(builder.firstPersonBranch, "firstPersonBranch");
         this.frameData = Objects.requireNonNull(builder.frameData, "frameData");
         this.advancedInput = Objects.requireNonNull(builder.advancedInput, "advancedInput");
     }
@@ -37,40 +30,51 @@ public final class ProcessedInputSnapshot {
         return mainTarget;
     }
 
+    public BranchRenderTargets worldBranch() {
+        return worldBranch;
+    }
+
+    public BranchRenderTargets firstPersonBranch() {
+        return firstPersonBranch;
+    }
+
+    @Deprecated
     public RenderTarget rawMaskTarget() {
-        return worldRawMaskTarget;
+        return worldBranch.rawMaskTarget();
     }
 
+    @Deprecated
     public RenderTarget hollowMaskTarget() {
-        return worldHollowMaskTarget;
+        return worldBranch.hollowMaskTarget();
     }
 
+    @Deprecated
     public RenderTarget sceneDepthTarget() {
-        return worldSceneDepthTarget;
+        return worldBranch.sceneDepthTarget();
     }
 
     public RenderTarget worldRawMaskTarget() {
-        return worldRawMaskTarget;
+        return worldBranch.rawMaskTarget();
     }
 
     public RenderTarget firstPersonRawMaskTarget() {
-        return firstPersonRawMaskTarget;
+        return firstPersonBranch.rawMaskTarget();
     }
 
     public RenderTarget worldHollowMaskTarget() {
-        return worldHollowMaskTarget;
+        return worldBranch.hollowMaskTarget();
     }
 
     public RenderTarget firstPersonHollowMaskTarget() {
-        return firstPersonHollowMaskTarget;
+        return firstPersonBranch.hollowMaskTarget();
     }
 
     public RenderTarget worldSceneDepthTarget() {
-        return worldSceneDepthTarget;
+        return worldBranch.sceneDepthTarget();
     }
 
     public RenderTarget firstPersonSceneDepthTarget() {
-        return firstPersonSceneDepthTarget;
+        return firstPersonBranch.sceneDepthTarget();
     }
 
     public OutlineFrameData frameData() {
@@ -83,11 +87,13 @@ public final class ProcessedInputSnapshot {
 
     public static final class Builder {
         private RenderTarget mainTarget;
+        private BranchRenderTargets worldBranch;
+        private BranchRenderTargets firstPersonBranch;
         private RenderTarget worldRawMaskTarget;
-        private RenderTarget firstPersonRawMaskTarget;
         private RenderTarget worldHollowMaskTarget;
-        private RenderTarget firstPersonHollowMaskTarget;
         private RenderTarget worldSceneDepthTarget;
+        private RenderTarget firstPersonRawMaskTarget;
+        private RenderTarget firstPersonHollowMaskTarget;
         private RenderTarget firstPersonSceneDepthTarget;
         private OutlineFrameData frameData;
         private OutlineAdvancedInput advancedInput = OutlineAdvancedInput.disabled();
@@ -97,16 +103,29 @@ public final class ProcessedInputSnapshot {
             return this;
         }
 
+        public Builder worldBranch(BranchRenderTargets branch) {
+            this.worldBranch = branch;
+            return this;
+        }
+
+        public Builder firstPersonBranch(BranchRenderTargets branch) {
+            this.firstPersonBranch = branch;
+            return this;
+        }
+
+        @Deprecated
         public Builder rawMaskTarget(RenderTarget target) {
             this.worldRawMaskTarget = target;
             return this;
         }
 
+        @Deprecated
         public Builder hollowMaskTarget(RenderTarget target) {
             this.worldHollowMaskTarget = target;
             return this;
         }
 
+        @Deprecated
         public Builder sceneDepthTarget(RenderTarget target) {
             this.worldSceneDepthTarget = target;
             return this;
@@ -153,7 +172,23 @@ public final class ProcessedInputSnapshot {
         }
 
         public ProcessedInputSnapshot build() {
+            if (worldBranch == null) {
+                worldBranch = requireBranch("world", worldRawMaskTarget, worldHollowMaskTarget, worldSceneDepthTarget);
+            }
+            if (firstPersonBranch == null) {
+                firstPersonBranch = requireBranch("first_person", firstPersonRawMaskTarget, firstPersonHollowMaskTarget, firstPersonSceneDepthTarget);
+            }
             return new ProcessedInputSnapshot(this);
+        }
+
+        private static BranchRenderTargets requireBranch(String branchName,
+                                                         RenderTarget rawMaskTarget,
+                                                         RenderTarget hollowMaskTarget,
+                                                         RenderTarget sceneDepthTarget) {
+            if (rawMaskTarget == null || hollowMaskTarget == null || sceneDepthTarget == null) {
+                throw new IllegalStateException("Missing branch targets for " + branchName + " branch");
+            }
+            return new BranchRenderTargets(rawMaskTarget, hollowMaskTarget, sceneDepthTarget);
         }
     }
 }

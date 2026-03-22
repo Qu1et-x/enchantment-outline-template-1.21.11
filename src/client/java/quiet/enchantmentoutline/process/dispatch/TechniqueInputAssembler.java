@@ -42,12 +42,8 @@ public final class TechniqueInputAssembler {
 
         return new OutlineTechniqueContext(
                 snapshot.mainTarget(),
-                snapshot.worldRawMaskTarget(),
-                snapshot.firstPersonRawMaskTarget(),
-                snapshot.worldHollowMaskTarget(),
-                snapshot.firstPersonHollowMaskTarget(),
-                snapshot.worldSceneDepthTarget(),
-                snapshot.firstPersonSceneDepthTarget(),
+                snapshot.worldBranch(),
+                snapshot.firstPersonBranch(),
                 snapshot.frameData(),
                 snapshot.advancedInput());
     }

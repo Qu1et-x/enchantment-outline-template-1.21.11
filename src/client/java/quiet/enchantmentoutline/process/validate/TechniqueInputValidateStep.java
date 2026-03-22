@@ -17,30 +17,30 @@ public final class TechniqueInputValidateStep {
         if (!isFinite(raw.advancedRawData())) {
             return false;
         }
-        if (raw.worldRawMaskTarget().width <= 0 || raw.worldRawMaskTarget().height <= 0) {
+        if (raw.worldBranch().rawMaskTarget().width <= 0 || raw.worldBranch().rawMaskTarget().height <= 0) {
             return false;
         }
-        if (raw.firstPersonRawMaskTarget().width <= 0 || raw.firstPersonRawMaskTarget().height <= 0) {
+        if (raw.firstPersonBranch().rawMaskTarget().width <= 0 || raw.firstPersonBranch().rawMaskTarget().height <= 0) {
             return false;
         }
-        if (raw.worldRawMaskTarget().width != raw.worldHollowMaskTarget().width
-                || raw.worldRawMaskTarget().height != raw.worldHollowMaskTarget().height) {
+        if (raw.worldBranch().rawMaskTarget().width != raw.worldBranch().hollowMaskTarget().width
+                || raw.worldBranch().rawMaskTarget().height != raw.worldBranch().hollowMaskTarget().height) {
             return false;
         }
-        if (raw.firstPersonRawMaskTarget().width != raw.firstPersonHollowMaskTarget().width
-                || raw.firstPersonRawMaskTarget().height != raw.firstPersonHollowMaskTarget().height) {
+        if (raw.firstPersonBranch().rawMaskTarget().width != raw.firstPersonBranch().hollowMaskTarget().width
+                || raw.firstPersonBranch().rawMaskTarget().height != raw.firstPersonBranch().hollowMaskTarget().height) {
             return false;
         }
 
         return raw.mainTarget().getColorTextureView() != null
-                && raw.worldRawMaskTarget().getColorTextureView() != null
-                && raw.worldRawMaskTarget().getDepthTextureView() != null
-                && raw.worldHollowMaskTarget().getColorTextureView() != null
-                && raw.worldSceneDepthTarget().getDepthTextureView() != null
-                && raw.firstPersonRawMaskTarget().getColorTextureView() != null
-                && raw.firstPersonRawMaskTarget().getDepthTextureView() != null
-                && raw.firstPersonHollowMaskTarget().getColorTextureView() != null
-                && raw.firstPersonSceneDepthTarget().getDepthTextureView() != null;
+                && raw.worldBranch().rawMaskTarget().getColorTextureView() != null
+                && raw.worldBranch().rawMaskTarget().getDepthTextureView() != null
+                && raw.worldBranch().hollowMaskTarget().getColorTextureView() != null
+                && raw.worldBranch().sceneDepthTarget().getDepthTextureView() != null
+                && raw.firstPersonBranch().rawMaskTarget().getColorTextureView() != null
+                && raw.firstPersonBranch().rawMaskTarget().getDepthTextureView() != null
+                && raw.firstPersonBranch().hollowMaskTarget().getColorTextureView() != null
+                && raw.firstPersonBranch().sceneDepthTarget().getDepthTextureView() != null;
     }
 
     public int normalizedFrameIndex(RawInputSnapshot raw) {

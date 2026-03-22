@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.acquire.rawmask.RawMaskAcquireStep;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
+import quiet.enchantmentoutline.technique.input.BranchRenderTargets;
 import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
 
 /**
@@ -47,6 +48,8 @@ public final class RawAcquireDispatcher {
         RenderTarget firstPersonHollowMaskTarget = rawMaskAcquireStep.firstPersonHollowMaskTarget();
         RenderTarget worldSceneDepthTarget = MaskBufferManager.getInstance().getWorldSceneDepthTarget();
         RenderTarget firstPersonSceneDepthTarget = MaskBufferManager.getInstance().getFirstPersonSceneDepthTarget();
+        BranchRenderTargets worldBranch = new BranchRenderTargets(worldRawMaskTarget, worldHollowMaskTarget, worldSceneDepthTarget);
+        BranchRenderTargets firstPersonBranch = new BranchRenderTargets(firstPersonRawMaskTarget, firstPersonHollowMaskTarget, firstPersonSceneDepthTarget);
         int viewportWidth = mainTarget.width;
         int viewportHeight = mainTarget.height;
         boolean worldLoaded = minecraft.level != null;
@@ -55,23 +58,21 @@ public final class RawAcquireDispatcher {
 
         if (OutlineDebugFlags.TECHNIQUE && dispatchLogCount < 20) {
             dispatchLogCount++;
-            LOGGER.info("Acquire snapshot: frame={}, viewport={}x{}, mask={}x{} ({}/20)",
+            LOGGER.info("Acquire snapshot: frame={}, viewport={}x{}, worldMask={}x{}, handMask={}x{} ({}/20)",
                     frameIndex,
                     viewportWidth,
                     viewportHeight,
                     worldRawMaskTarget.width,
                     worldRawMaskTarget.height,
+                    firstPersonRawMaskTarget.width,
+                    firstPersonRawMaskTarget.height,
                     dispatchLogCount);
         }
 
         return new RawInputSnapshot(
                 mainTarget,
-                worldRawMaskTarget,
-                firstPersonRawMaskTarget,
-                worldHollowMaskTarget,
-                firstPersonHollowMaskTarget,
-                worldSceneDepthTarget,
-                firstPersonSceneDepthTarget,
+                worldBranch,
+                firstPersonBranch,
                 frameIndex,
                 viewportWidth,
                 viewportHeight,

@@ -63,8 +63,8 @@ public final class OutlineRenderOrchestrator {
             LOGGER.info("Outline process #{}, mode={}, rawMask={}x{}",
                     processLogCount,
                     techniqueManager.getCurrentMode().id(),
-                    rawSnapshot.rawMaskTarget().width,
-                    rawSnapshot.rawMaskTarget().height);
+                    rawSnapshot.worldBranch().rawMaskTarget().width,
+                    rawSnapshot.worldBranch().rawMaskTarget().height);
         }
 
         ProcessedInputSnapshot processedSnapshot = ProcessPipelineCoordinator.getInstance().process(rawSnapshot);

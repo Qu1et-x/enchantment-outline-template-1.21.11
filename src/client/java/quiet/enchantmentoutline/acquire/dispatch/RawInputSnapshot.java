@@ -1,7 +1,10 @@
 package quiet.enchantmentoutline.acquire.dispatch;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import quiet.enchantmentoutline.technique.input.BranchRenderTargets;
 import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
+
+import java.util.Objects;
 
 /**
  * 职责描述: 承载采集阶段的原始输入快照。
@@ -9,12 +12,8 @@ import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
  */
 public final class RawInputSnapshot {
     private final RenderTarget mainTarget;
-    private final RenderTarget worldRawMaskTarget;
-    private final RenderTarget firstPersonRawMaskTarget;
-    private final RenderTarget worldHollowMaskTarget;
-    private final RenderTarget firstPersonHollowMaskTarget;
-    private final RenderTarget worldSceneDepthTarget;
-    private final RenderTarget firstPersonSceneDepthTarget;
+    private final BranchRenderTargets worldBranch;
+    private final BranchRenderTargets firstPersonBranch;
     private final int frameIndex;
     private final int viewportWidth;
     private final int viewportHeight;
@@ -23,30 +22,22 @@ public final class RawInputSnapshot {
     private final RawAdvancedFrameData advancedRawData;
 
     public RawInputSnapshot(RenderTarget mainTarget,
-                            RenderTarget worldRawMaskTarget,
-                            RenderTarget firstPersonRawMaskTarget,
-                            RenderTarget worldHollowMaskTarget,
-                            RenderTarget firstPersonHollowMaskTarget,
-                            RenderTarget worldSceneDepthTarget,
-                            RenderTarget firstPersonSceneDepthTarget,
+                            BranchRenderTargets worldBranch,
+                            BranchRenderTargets firstPersonBranch,
                             int frameIndex,
                             int viewportWidth,
                             int viewportHeight,
                             boolean worldLoaded,
                             OutlineTechniqueSettings settings,
                             RawAdvancedFrameData advancedRawData) {
-        this.mainTarget = mainTarget;
-        this.worldRawMaskTarget = worldRawMaskTarget;
-        this.firstPersonRawMaskTarget = firstPersonRawMaskTarget;
-        this.worldHollowMaskTarget = worldHollowMaskTarget;
-        this.firstPersonHollowMaskTarget = firstPersonHollowMaskTarget;
-        this.worldSceneDepthTarget = worldSceneDepthTarget;
-        this.firstPersonSceneDepthTarget = firstPersonSceneDepthTarget;
+        this.mainTarget = Objects.requireNonNull(mainTarget, "mainTarget");
+        this.worldBranch = Objects.requireNonNull(worldBranch, "worldBranch");
+        this.firstPersonBranch = Objects.requireNonNull(firstPersonBranch, "firstPersonBranch");
         this.frameIndex = frameIndex;
         this.viewportWidth = viewportWidth;
         this.viewportHeight = viewportHeight;
         this.worldLoaded = worldLoaded;
-        this.settings = settings;
+        this.settings = Objects.requireNonNull(settings, "settings");
         this.advancedRawData = advancedRawData;
     }
 
@@ -54,40 +45,51 @@ public final class RawInputSnapshot {
         return mainTarget;
     }
 
+    public BranchRenderTargets worldBranch() {
+        return worldBranch;
+    }
+
+    public BranchRenderTargets firstPersonBranch() {
+        return firstPersonBranch;
+    }
+
+    @Deprecated
     public RenderTarget rawMaskTarget() {
-        return worldRawMaskTarget;
+        return worldBranch.rawMaskTarget();
     }
 
+    @Deprecated
     public RenderTarget hollowMaskTarget() {
-        return worldHollowMaskTarget;
+        return worldBranch.hollowMaskTarget();
     }
 
+    @Deprecated
     public RenderTarget sceneDepthTarget() {
-        return worldSceneDepthTarget;
+        return worldBranch.sceneDepthTarget();
     }
 
     public RenderTarget worldRawMaskTarget() {
-        return worldRawMaskTarget;
+        return worldBranch.rawMaskTarget();
     }
 
     public RenderTarget firstPersonRawMaskTarget() {
-        return firstPersonRawMaskTarget;
+        return firstPersonBranch.rawMaskTarget();
     }
 
     public RenderTarget worldHollowMaskTarget() {
-        return worldHollowMaskTarget;
+        return worldBranch.hollowMaskTarget();
     }
 
     public RenderTarget firstPersonHollowMaskTarget() {
-        return firstPersonHollowMaskTarget;
+        return firstPersonBranch.hollowMaskTarget();
     }
 
     public RenderTarget worldSceneDepthTarget() {
-        return worldSceneDepthTarget;
+        return worldBranch.sceneDepthTarget();
     }
 
     public RenderTarget firstPersonSceneDepthTarget() {
-        return firstPersonSceneDepthTarget;
+        return firstPersonBranch.sceneDepthTarget();
     }
 
     public int frameIndex() {

@@ -125,7 +125,7 @@ public class OutlineRenderLayers {
 
     public static Identifier resolveMaskTexture(RenderType sourceRenderType) {
         if (sourceRenderType instanceof RenderTypeStateAccessor) {
-            RenderSetup setup = ((RenderTypeStateAccessor) (Object) sourceRenderType).enchantmentOutline$getState();
+            RenderSetup setup = ((RenderTypeStateAccessor) sourceRenderType).enchantmentOutline$getState();
             Map<String, ?> textures = ((RenderSetupTexturesAccessor) (Object) setup).enchantmentOutline$getTextures();
             Object binding = textures.get("Sampler0");
             if (binding instanceof RenderSetupTextureBindingAccessor

@@ -8,26 +8,45 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 public interface OutlineTechniqueInput {
     RenderTarget mainTarget();
 
-    RenderTarget worldRawMaskTarget();
+    BranchRenderTargets worldBranch();
 
-    RenderTarget firstPersonRawMaskTarget();
+    BranchRenderTargets firstPersonBranch();
 
-    RenderTarget worldHollowMaskTarget();
+    default RenderTarget worldRawMaskTarget() {
+        return worldBranch().rawMaskTarget();
+    }
 
-    RenderTarget firstPersonHollowMaskTarget();
+    default RenderTarget firstPersonRawMaskTarget() {
+        return firstPersonBranch().rawMaskTarget();
+    }
 
-    RenderTarget worldSceneDepthTarget();
+    default RenderTarget worldHollowMaskTarget() {
+        return worldBranch().hollowMaskTarget();
+    }
 
-    RenderTarget firstPersonSceneDepthTarget();
+    default RenderTarget firstPersonHollowMaskTarget() {
+        return firstPersonBranch().hollowMaskTarget();
+    }
 
+    default RenderTarget worldSceneDepthTarget() {
+        return worldBranch().sceneDepthTarget();
+    }
+
+    default RenderTarget firstPersonSceneDepthTarget() {
+        return firstPersonBranch().sceneDepthTarget();
+    }
+
+    @Deprecated
     default RenderTarget rawMaskTarget() {
         return worldRawMaskTarget();
     }
 
+    @Deprecated
     default RenderTarget hollowMaskTarget() {
         return worldHollowMaskTarget();
     }
 
+    @Deprecated
     default RenderTarget sceneDepthTarget() {
         return worldSceneDepthTarget();
     }

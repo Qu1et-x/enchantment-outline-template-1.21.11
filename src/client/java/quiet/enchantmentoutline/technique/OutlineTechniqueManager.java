@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.technique.input.OutlineTechniqueInput;
-import quiet.enchantmentoutline.technique.impl.DelegatingPlaceholderTechnique;
 import quiet.enchantmentoutline.technique.impl.LegacyRadiusSamplingTechnique;
+import quiet.enchantmentoutline.technique.impl.jfa.JfaOutlineTechnique;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -19,14 +19,14 @@ public final class OutlineTechniqueManager {
 
     private static OutlineTechniqueManager instance;
 
-    private final Map<OutlineTechniqueMode, OutlineTechnique> techniques = new EnumMap<>(OutlineTechniqueMode.class);
-    private volatile OutlineTechniqueMode currentMode = OutlineTechniqueMode.LEGACY_RADIUS;
+    private final Map<OutlineTechniqueMode, OutlineTechnique> bindings = new EnumMap<>(OutlineTechniqueMode.class);
+    private volatile OutlineTechniqueMode currentMode = OutlineTechniqueMode.JFA;
     private int processDispatchLogCount;
 
     private OutlineTechniqueManager() {
         registerBuiltins();
         String modeFromProperty = System.getProperty("enchantmentoutline.technique");
-        currentMode = OutlineTechniqueMode.parseOrDefault(modeFromProperty, OutlineTechniqueMode.LEGACY_RADIUS);
+        currentMode = OutlineTechniqueMode.parseOrDefault(modeFromProperty, OutlineTechniqueMode.JFA);
         if (OutlineDebugFlags.TECHNIQUE && modeFromProperty != null) {
             LOGGER.info("Technique mode configured by -Denchantmentoutline.technique={}: resolved={}",
                     modeFromProperty,
@@ -35,7 +35,7 @@ public final class OutlineTechniqueManager {
         if (OutlineDebugFlags.TECHNIQUE) {
             LOGGER.info("Technique manager initialized. activeMode={}, availableModes={}",
                     currentMode.id(),
-                    techniques.keySet());
+                    bindings.keySet());
         }
     }
 
@@ -58,17 +58,19 @@ public final class OutlineTechniqueManager {
             return;
         }
         currentMode = mode;
-        OutlineTechnique technique = techniqueOrFallback(mode);
-        LOGGER.info("Technique mode switched: mode={}, implementation={}", mode.id(), technique.debugName());
+        OutlineTechnique implementation = implementationOrFallback(mode);
+        LOGGER.info("Technique mode switched: mode={}, implementation={}",
+                mode.id(),
+                implementation.debugName());
     }
 
     public void setMode(String modeText) {
-        setMode(OutlineTechniqueMode.parseOrDefault(modeText, OutlineTechniqueMode.LEGACY_RADIUS));
+        setMode(OutlineTechniqueMode.parseOrDefault(modeText, OutlineTechniqueMode.JFA));
     }
 
     public void process(OutlineTechniqueInput input) {
         Objects.requireNonNull(input, "input");
-        OutlineTechnique technique = techniqueOrFallback(currentMode);
+        OutlineTechnique technique = implementationOrFallback(currentMode);
         if (OutlineDebugFlags.TECHNIQUE && processDispatchLogCount < 16) {
             processDispatchLogCount++;
             LOGGER.info("Dispatch technique: mode={}, impl={}, frame={}, viewport={}x{} ({}/16)",
@@ -84,44 +86,46 @@ public final class OutlineTechniqueManager {
 
     public void register(OutlineTechnique technique) {
         OutlineTechnique safe = Objects.requireNonNull(technique, "technique");
-        OutlineTechnique previous = techniques.put(safe.mode(), safe);
-        if (previous != null && previous != safe) {
-            LOGGER.warn("Technique replaced: mode={}, oldImpl={}, newImpl={}",
-                    safe.mode().id(),
+        register(safe.mode(), safe);
+    }
+
+    public void register(OutlineTechniqueMode mode, OutlineTechnique implementation) {
+        OutlineTechniqueMode safeMode = Objects.requireNonNull(mode, "mode");
+        OutlineTechnique safeImplementation = Objects.requireNonNull(implementation, "implementation");
+
+        OutlineTechnique previous = bindings.put(safeMode, safeImplementation);
+        if (previous != null && previous != safeImplementation) {
+            LOGGER.warn("Technique binding replaced: mode={}, oldImpl={}, newImpl={}",
+                    safeMode.id(),
                     previous.debugName(),
-                    safe.debugName());
+                    safeImplementation.debugName());
         } else if (OutlineDebugFlags.TECHNIQUE) {
-            LOGGER.info("Technique registered: mode={}, impl={}", safe.mode().id(), safe.debugName());
+            LOGGER.info("Technique binding registered: mode={}, impl={}",
+                    safeMode.id(),
+                    safeImplementation.debugName());
         }
     }
 
-    private OutlineTechnique techniqueOrFallback(OutlineTechniqueMode mode) {
-        OutlineTechnique technique = techniques.get(mode);
-        if (technique != null) {
-            return technique;
+    private OutlineTechnique implementationOrFallback(OutlineTechniqueMode mode) {
+        OutlineTechnique implementation = bindings.get(mode);
+        if (implementation != null) {
+            return implementation;
         }
 
-        OutlineTechnique fallback = techniques.get(OutlineTechniqueMode.LEGACY_RADIUS);
-        if (fallback == null) {
-            throw new IllegalStateException("Legacy technique must be registered.");
-        }
-
-        LOGGER.warn("Technique mode {} is missing from registry, fallback to {}",
-                mode.id(),
-                OutlineTechniqueMode.LEGACY_RADIUS.id());
-        return fallback;
+        // Intentionally disable silent fallback during JFA validation.
+        // If a mode has no bound implementation, fail fast so we never accidentally run legacy.
+        throw new IllegalStateException("No technique implementation bound for mode=" + mode.id());
     }
 
     private void registerBuiltins() {
         OutlineTechnique legacy = new LegacyRadiusSamplingTechnique();
-        register(legacy);
-        registerPlaceholder(OutlineTechniqueMode.JFA, "JfaOutlineTechnique", legacy);
-        registerPlaceholder(OutlineTechniqueMode.BILATERAL_GAUSSIAN, "BilateralGaussianOutlineTechnique", legacy);
-        registerPlaceholder(OutlineTechniqueMode.STENCIL_EXPAND, "StencilExpandOutlineTechnique", legacy);
-    }
+        OutlineTechnique jfa = new JfaOutlineTechnique();
+        register(OutlineTechniqueMode.LEGACY_RADIUS, legacy);
+        register(OutlineTechniqueMode.JFA, jfa);
 
-    private void registerPlaceholder(OutlineTechniqueMode mode, String debugName, OutlineTechnique fallback) {
-        register(new DelegatingPlaceholderTechnique(mode, debugName, fallback));
+        // Temporarily disabled during JFA validation to avoid any implicit legacy delegation:
+        // register(OutlineTechniqueMode.BILATERAL_GAUSSIAN, legacy);
+        // register(OutlineTechniqueMode.STENCIL_EXPAND, legacy);
     }
 }
 

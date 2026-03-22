@@ -49,8 +49,16 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
     @Override
     public void process(OutlineTechniqueInput input) {
-        composeBranch(input, "world", input.worldHollowMaskTarget(), input.worldRawMaskTarget(), input.worldSceneDepthTarget());
-        composeBranch(input, "first_person", input.firstPersonHollowMaskTarget(), input.firstPersonRawMaskTarget(), input.firstPersonSceneDepthTarget());
+        composeBranch(input,
+                "world",
+                input.worldBranch().hollowMaskTarget(),
+                input.worldBranch().rawMaskTarget(),
+                input.worldBranch().sceneDepthTarget());
+        composeBranch(input,
+                "first_person",
+                input.firstPersonBranch().hollowMaskTarget(),
+                input.firstPersonBranch().rawMaskTarget(),
+                input.firstPersonBranch().sceneDepthTarget());
     }
 
     private static void composeBranch(OutlineTechniqueInput input,
