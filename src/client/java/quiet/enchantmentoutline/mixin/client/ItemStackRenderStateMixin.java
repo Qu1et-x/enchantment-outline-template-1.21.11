@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import quiet.enchantmentoutline.render.OutlineRenderContext;
+import quiet.enchantmentoutline.runtime.rendering.OutlineRenderContext;
 
 /**
  * 职责描述: 在物品层提交流程前后同步当前 ItemDisplayContext。

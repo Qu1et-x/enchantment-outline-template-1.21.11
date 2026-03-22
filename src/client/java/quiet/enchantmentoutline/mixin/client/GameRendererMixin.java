@@ -6,11 +6,14 @@ import net.minecraft.client.renderer.GameRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import quiet.enchantmentoutline.postprocess.MaskBufferManager;
-import quiet.enchantmentoutline.postprocess.OutlinePostProcessor;
+import quiet.enchantmentoutline.debug.OutlineDebugFlags;
+import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
+import quiet.enchantmentoutline.runtime.frame.OutlineFrameCaptureService;
+import quiet.enchantmentoutline.runtime.orchestration.OutlineRenderOrchestrator;
 
 /**
  * 职责描述: 注入 GameRenderer 的每一帧渲染流程。
@@ -18,23 +21,37 @@ import quiet.enchantmentoutline.postprocess.OutlinePostProcessor;
  */
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
+    @Unique
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Frame");
+    @Unique
     private static int POST_HOOK_LOG_COUNT;
+    @Unique
     private static int SCENE_CAPTURE_LOG_COUNT;
+    @Unique
+    private static int HAND_CAPTURE_LOG_COUNT;
 
     @Inject(method = "render", at = @At("HEAD"))
     private void onRenderHead(DeltaTracker deltaTracker, boolean bl, CallbackInfo ci) {
         // 每帧先清空掩码颜色和深度。
-        MaskBufferManager.getInstance().beginFrame();
+        OutlineFrameCaptureService.getInstance().beginFrame();
     }
 
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
     private void onBeforeHandDepthClear(DeltaTracker deltaTracker, CallbackInfo ci) {
-        if (SCENE_CAPTURE_LOG_COUNT < 20) {
+        if (OutlineDebugFlags.FRAME && SCENE_CAPTURE_LOG_COUNT < 20) {
             SCENE_CAPTURE_LOG_COUNT++;
             LOGGER.info("Frame hook before hand depth clear: pass={}/20", SCENE_CAPTURE_LOG_COUNT);
         }
-        MaskBufferManager.getInstance().captureSceneDepthBeforeHand();
+        OutlineFrameCaptureService.getInstance().captureSceneDepthBeforeHand();
+    }
+
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;renderItemInHand(FZLorg/joml/Matrix4f;)V", shift = At.Shift.AFTER))
+    private void onAfterHandRender(DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (OutlineDebugFlags.FRAME && HAND_CAPTURE_LOG_COUNT < 20) {
+            HAND_CAPTURE_LOG_COUNT++;
+            LOGGER.info("Frame hook after hand render: pass={}/20", HAND_CAPTURE_LOG_COUNT);
+        }
+        OutlineFrameCaptureService.getInstance().captureSceneDepthAfterHand();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/CommandEncoder;clearDepthTexture(Lcom/mojang/blaze3d/textures/GpuTexture;D)V"))
@@ -43,11 +60,11 @@ public class GameRendererMixin {
             return;
         }
 
-        if (POST_HOOK_LOG_COUNT < 20) {
+        if (OutlineDebugFlags.FRAME && POST_HOOK_LOG_COUNT < 20) {
             POST_HOOK_LOG_COUNT++;
             LOGGER.info("Frame hook before main depth clear: pass={}/20", POST_HOOK_LOG_COUNT);
         }
-        OutlinePostProcessor.getInstance().process();
+        OutlineRenderOrchestrator.getInstance().process(deltaTracker);
     }
 
     @Inject(method = "resize", at = @At("RETURN"))
