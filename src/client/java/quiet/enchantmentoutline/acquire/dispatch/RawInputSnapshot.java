@@ -9,9 +9,12 @@ import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
  */
 public final class RawInputSnapshot {
     private final RenderTarget mainTarget;
-    private final RenderTarget rawMaskTarget;
-    private final RenderTarget hollowMaskTarget;
-    private final RenderTarget sceneDepthTarget;
+    private final RenderTarget worldRawMaskTarget;
+    private final RenderTarget firstPersonRawMaskTarget;
+    private final RenderTarget worldHollowMaskTarget;
+    private final RenderTarget firstPersonHollowMaskTarget;
+    private final RenderTarget worldSceneDepthTarget;
+    private final RenderTarget firstPersonSceneDepthTarget;
     private final int frameIndex;
     private final int viewportWidth;
     private final int viewportHeight;
@@ -20,9 +23,12 @@ public final class RawInputSnapshot {
     private final RawAdvancedFrameData advancedRawData;
 
     public RawInputSnapshot(RenderTarget mainTarget,
-                            RenderTarget rawMaskTarget,
-                            RenderTarget hollowMaskTarget,
-                            RenderTarget sceneDepthTarget,
+                            RenderTarget worldRawMaskTarget,
+                            RenderTarget firstPersonRawMaskTarget,
+                            RenderTarget worldHollowMaskTarget,
+                            RenderTarget firstPersonHollowMaskTarget,
+                            RenderTarget worldSceneDepthTarget,
+                            RenderTarget firstPersonSceneDepthTarget,
                             int frameIndex,
                             int viewportWidth,
                             int viewportHeight,
@@ -30,9 +36,12 @@ public final class RawInputSnapshot {
                             OutlineTechniqueSettings settings,
                             RawAdvancedFrameData advancedRawData) {
         this.mainTarget = mainTarget;
-        this.rawMaskTarget = rawMaskTarget;
-        this.hollowMaskTarget = hollowMaskTarget;
-        this.sceneDepthTarget = sceneDepthTarget;
+        this.worldRawMaskTarget = worldRawMaskTarget;
+        this.firstPersonRawMaskTarget = firstPersonRawMaskTarget;
+        this.worldHollowMaskTarget = worldHollowMaskTarget;
+        this.firstPersonHollowMaskTarget = firstPersonHollowMaskTarget;
+        this.worldSceneDepthTarget = worldSceneDepthTarget;
+        this.firstPersonSceneDepthTarget = firstPersonSceneDepthTarget;
         this.frameIndex = frameIndex;
         this.viewportWidth = viewportWidth;
         this.viewportHeight = viewportHeight;
@@ -46,15 +55,39 @@ public final class RawInputSnapshot {
     }
 
     public RenderTarget rawMaskTarget() {
-        return rawMaskTarget;
+        return worldRawMaskTarget;
     }
 
     public RenderTarget hollowMaskTarget() {
-        return hollowMaskTarget;
+        return worldHollowMaskTarget;
     }
 
     public RenderTarget sceneDepthTarget() {
-        return sceneDepthTarget;
+        return worldSceneDepthTarget;
+    }
+
+    public RenderTarget worldRawMaskTarget() {
+        return worldRawMaskTarget;
+    }
+
+    public RenderTarget firstPersonRawMaskTarget() {
+        return firstPersonRawMaskTarget;
+    }
+
+    public RenderTarget worldHollowMaskTarget() {
+        return worldHollowMaskTarget;
+    }
+
+    public RenderTarget firstPersonHollowMaskTarget() {
+        return firstPersonHollowMaskTarget;
+    }
+
+    public RenderTarget worldSceneDepthTarget() {
+        return worldSceneDepthTarget;
+    }
+
+    public RenderTarget firstPersonSceneDepthTarget() {
+        return firstPersonSceneDepthTarget;
     }
 
     public int frameIndex() {

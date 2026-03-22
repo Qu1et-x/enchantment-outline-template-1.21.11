@@ -15,9 +15,12 @@ import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 public class MaskBufferManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("EnchantmentOutline-Buffer");
     private static MaskBufferManager instance;
-    private RenderTarget maskTarget;
-    private RenderTarget hollowMaskTarget;
-    private RenderTarget sceneDepthTarget;
+    private RenderTarget worldMaskTarget;
+    private RenderTarget firstPersonMaskTarget;
+    private RenderTarget worldHollowMaskTarget;
+    private RenderTarget firstPersonHollowMaskTarget;
+    private RenderTarget worldSceneDepthTarget;
+    private RenderTarget firstPersonSceneDepthTarget;
 
     private MaskBufferManager() {
     }
@@ -30,63 +33,100 @@ public class MaskBufferManager {
     }
 
     public RenderTarget getMaskTarget() {
-        if (maskTarget == null) {
+        if (worldMaskTarget == null) {
             init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
         }
-        return maskTarget;
+        return worldMaskTarget;
+    }
+
+    public RenderTarget getWorldMaskTarget() {
+        return getMaskTarget();
+    }
+
+    public RenderTarget getFirstPersonMaskTarget() {
+        if (firstPersonMaskTarget == null) {
+            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
+        }
+        return firstPersonMaskTarget;
     }
 
     public RenderTarget getHollowMaskTarget() {
-        if (hollowMaskTarget == null) {
+        if (worldHollowMaskTarget == null) {
             init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
         }
-        return hollowMaskTarget;
+        return worldHollowMaskTarget;
+    }
+
+    public RenderTarget getWorldHollowMaskTarget() {
+        return getHollowMaskTarget();
+    }
+
+    public RenderTarget getFirstPersonHollowMaskTarget() {
+        if (firstPersonHollowMaskTarget == null) {
+            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
+        }
+        return firstPersonHollowMaskTarget;
     }
 
     public RenderTarget getSceneDepthTarget() {
-        if (sceneDepthTarget == null) {
+        if (worldSceneDepthTarget == null) {
             init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
         }
-        return sceneDepthTarget;
+        return worldSceneDepthTarget;
+    }
+
+    public RenderTarget getWorldSceneDepthTarget() {
+        return getSceneDepthTarget();
+    }
+
+    public RenderTarget getFirstPersonSceneDepthTarget() {
+        if (firstPersonSceneDepthTarget == null) {
+            init(Minecraft.getInstance().getWindow().getWidth(), Minecraft.getInstance().getWindow().getHeight());
+        }
+        return firstPersonSceneDepthTarget;
     }
 
     public void init(int width, int height) {
         RenderSystem.assertOnRenderThread();
-        if (maskTarget != null) {
-            maskTarget.destroyBuffers();
-        }
-        if (hollowMaskTarget != null) {
-            hollowMaskTarget.destroyBuffers();
-        }
-        if (sceneDepthTarget != null) {
-            sceneDepthTarget.destroyBuffers();
-        }
+        destroyIfPresent(worldMaskTarget);
+        destroyIfPresent(firstPersonMaskTarget);
+        destroyIfPresent(worldHollowMaskTarget);
+        destroyIfPresent(firstPersonHollowMaskTarget);
+        destroyIfPresent(worldSceneDepthTarget);
+        destroyIfPresent(firstPersonSceneDepthTarget);
         if (OutlineDebugFlags.BUFFER) {
             LOGGER.info("Initializing mask buffer: {}x{}", width, height);
         }
-        maskTarget = new TextureTarget("Enchantment Mask", width, height, true);
-        hollowMaskTarget = new TextureTarget("Enchantment Hollow Mask", width, height, true);
-        sceneDepthTarget = new TextureTarget("Enchantment Scene Depth", width, height, true);
+        worldMaskTarget = new TextureTarget("Enchantment World Mask", width, height, true);
+        firstPersonMaskTarget = new TextureTarget("Enchantment First Person Mask", width, height, true);
+        worldHollowMaskTarget = new TextureTarget("Enchantment World Hollow Mask", width, height, true);
+        firstPersonHollowMaskTarget = new TextureTarget("Enchantment First Person Hollow Mask", width, height, true);
+        worldSceneDepthTarget = new TextureTarget("Enchantment World Scene Depth", width, height, true);
+        firstPersonSceneDepthTarget = new TextureTarget("Enchantment First Person Scene Depth", width, height, true);
     }
 
     public void onRescale(int width, int height) {
-        if (maskTarget != null) {
-            maskTarget.resize(width, height);
-            if (OutlineDebugFlags.BUFFER) {
-                LOGGER.info("Rescaled mask buffer to {}x{}", width, height);
-            }
+        resizeIfPresent(worldMaskTarget, width, height, "world mask");
+        resizeIfPresent(firstPersonMaskTarget, width, height, "first-person mask");
+        resizeIfPresent(worldSceneDepthTarget, width, height, "world scene depth");
+        resizeIfPresent(firstPersonSceneDepthTarget, width, height, "first-person scene depth");
+        resizeIfPresent(worldHollowMaskTarget, width, height, "world hollow mask");
+        resizeIfPresent(firstPersonHollowMaskTarget, width, height, "first-person hollow mask");
+    }
+
+    private static void destroyIfPresent(RenderTarget target) {
+        if (target != null) {
+            target.destroyBuffers();
         }
-        if (sceneDepthTarget != null) {
-            sceneDepthTarget.resize(width, height);
-            if (OutlineDebugFlags.BUFFER) {
-                LOGGER.info("Rescaled scene depth buffer to {}x{}", width, height);
-            }
+    }
+
+    private static void resizeIfPresent(RenderTarget target, int width, int height, String name) {
+        if (target == null) {
+            return;
         }
-        if (hollowMaskTarget != null) {
-            hollowMaskTarget.resize(width, height);
-            if (OutlineDebugFlags.BUFFER) {
-                LOGGER.info("Rescaled hollow mask buffer to {}x{}", width, height);
-            }
+        target.resize(width, height);
+        if (OutlineDebugFlags.BUFFER) {
+            LOGGER.info("Rescaled {} buffer to {}x{}", name, width, height);
         }
     }
 }

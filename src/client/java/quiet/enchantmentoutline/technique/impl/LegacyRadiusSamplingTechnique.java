@@ -49,17 +49,24 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
     @Override
     public void process(OutlineTechniqueInput input) {
-        RenderTarget source = input.hollowMaskTarget();
-        RenderTarget rawMaskTarget = input.rawMaskTarget();
-        RenderTarget sceneDepthTarget = input.sceneDepthTarget();
-        if (source.getColorTextureView() == null
+        composeBranch(input, "world", input.worldHollowMaskTarget(), input.worldRawMaskTarget(), input.worldSceneDepthTarget());
+        composeBranch(input, "first_person", input.firstPersonHollowMaskTarget(), input.firstPersonRawMaskTarget(), input.firstPersonSceneDepthTarget());
+    }
+
+    private static void composeBranch(OutlineTechniqueInput input,
+                                      String branchLabel,
+                                      RenderTarget hollowMaskTarget,
+                                      RenderTarget rawMaskTarget,
+                                      RenderTarget sceneDepthTarget) {
+        if (hollowMaskTarget.getColorTextureView() == null
                 || rawMaskTarget.getColorTextureView() == null
                 || rawMaskTarget.getDepthTextureView() == null
                 || sceneDepthTarget.getDepthTextureView() == null) {
             if (OutlineDebugFlags.TECHNIQUE && skipLogCount < 20) {
                 skipLogCount++;
-                LOGGER.info("Skipping legacy composite: hollowColorView={}, rawColorView={}, maskDepthView={}, sceneDepthView={} ({}/20)",
-                        source.getColorTextureView() != null,
+                LOGGER.info("Skipping legacy composite branch={}: hollowColorView={}, rawColorView={}, maskDepthView={}, sceneDepthView={} ({}/20)",
+                        branchLabel,
+                        hollowMaskTarget.getColorTextureView() != null,
                         rawMaskTarget.getColorTextureView() != null,
                         rawMaskTarget.getDepthTextureView() != null,
                         sceneDepthTarget.getDepthTextureView() != null,
@@ -70,9 +77,10 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
         if (OutlineDebugFlags.TECHNIQUE && processLogCount < 16) {
             processLogCount++;
-            LOGGER.info("Legacy composite pass #{}: hollowColor={}, rawColor={}, rawDepth={}, sceneDepth={}",
+            LOGGER.info("Legacy composite pass #{} branch={}: hollowColor={}, rawColor={}, rawDepth={}, sceneDepth={}",
                     processLogCount,
-                    source.getColorTextureView() != null,
+                    branchLabel,
+                    hollowMaskTarget.getColorTextureView() != null,
                     rawMaskTarget.getColorTextureView() != null,
                     rawMaskTarget.getDepthTextureView() != null,
                     sceneDepthTarget.getDepthTextureView() != null);
@@ -80,13 +88,13 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
         try (RenderPass renderPass = RenderSystem.getDevice()
                 .createCommandEncoder()
-                .createRenderPass(() -> "Enchantment Outline Post",
+                .createRenderPass(() -> "Enchantment Outline Post [" + branchLabel + "]",
                         Objects.requireNonNull(input.mainTarget().getColorTextureView(), "Main target color view is not initialized"),
                         OptionalInt.empty())) {
 
             renderPass.setPipeline(DEPTH_AWARE_OUTLINE_BLIT);
             RenderSystem.bindDefaultUniforms(renderPass);
-            renderPass.bindTexture("HollowSampler", source.getColorTextureView(),
+            renderPass.bindTexture("HollowSampler", hollowMaskTarget.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
             renderPass.bindTexture("RawMaskSampler", rawMaskTarget.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));

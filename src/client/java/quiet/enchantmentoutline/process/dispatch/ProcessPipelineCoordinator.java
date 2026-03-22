@@ -60,13 +60,17 @@ public final class ProcessPipelineCoordinator {
         );
 
         // 统一处理 hollow mask，保证算法层拿到的是稳定输入。
-        HollowMaskExtractor.getInstance().process(raw.rawMaskTarget(), raw.hollowMaskTarget());
+        HollowMaskExtractor.getInstance().process(raw.worldRawMaskTarget(), raw.worldHollowMaskTarget());
+        HollowMaskExtractor.getInstance().process(raw.firstPersonRawMaskTarget(), raw.firstPersonHollowMaskTarget());
 
         ProcessedInputSnapshot snapshot = new ProcessedInputSnapshot.Builder()
                 .mainTarget(raw.mainTarget())
-                .rawMaskTarget(raw.rawMaskTarget())
-                .hollowMaskTarget(raw.hollowMaskTarget())
-                .sceneDepthTarget(raw.sceneDepthTarget())
+                .worldRawMaskTarget(raw.worldRawMaskTarget())
+                .firstPersonRawMaskTarget(raw.firstPersonRawMaskTarget())
+                .worldHollowMaskTarget(raw.worldHollowMaskTarget())
+                .firstPersonHollowMaskTarget(raw.firstPersonHollowMaskTarget())
+                .worldSceneDepthTarget(raw.worldSceneDepthTarget())
+                .firstPersonSceneDepthTarget(raw.firstPersonSceneDepthTarget())
                 .frameData(frameData)
                 .advancedInput(advancedInput)
                 .build();

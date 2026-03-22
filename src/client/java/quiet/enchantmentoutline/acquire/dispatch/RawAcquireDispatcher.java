@@ -41,9 +41,12 @@ public final class RawAcquireDispatcher {
 
         Minecraft minecraft = Minecraft.getInstance();
         RenderTarget mainTarget = minecraft.getMainRenderTarget();
-        RenderTarget rawMaskTarget = rawMaskAcquireStep.rawMaskTarget();
-        RenderTarget hollowMaskTarget = rawMaskAcquireStep.hollowMaskTarget();
-        RenderTarget sceneDepthTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
+        RenderTarget worldRawMaskTarget = rawMaskAcquireStep.worldRawMaskTarget();
+        RenderTarget firstPersonRawMaskTarget = rawMaskAcquireStep.firstPersonRawMaskTarget();
+        RenderTarget worldHollowMaskTarget = rawMaskAcquireStep.worldHollowMaskTarget();
+        RenderTarget firstPersonHollowMaskTarget = rawMaskAcquireStep.firstPersonHollowMaskTarget();
+        RenderTarget worldSceneDepthTarget = MaskBufferManager.getInstance().getWorldSceneDepthTarget();
+        RenderTarget firstPersonSceneDepthTarget = MaskBufferManager.getInstance().getFirstPersonSceneDepthTarget();
         int viewportWidth = mainTarget.width;
         int viewportHeight = mainTarget.height;
         boolean worldLoaded = minecraft.level != null;
@@ -56,16 +59,19 @@ public final class RawAcquireDispatcher {
                     frameIndex,
                     viewportWidth,
                     viewportHeight,
-                    rawMaskTarget.width,
-                    rawMaskTarget.height,
+                    worldRawMaskTarget.width,
+                    worldRawMaskTarget.height,
                     dispatchLogCount);
         }
 
         return new RawInputSnapshot(
                 mainTarget,
-                rawMaskTarget,
-                hollowMaskTarget,
-                sceneDepthTarget,
+                worldRawMaskTarget,
+                firstPersonRawMaskTarget,
+                worldHollowMaskTarget,
+                firstPersonHollowMaskTarget,
+                worldSceneDepthTarget,
+                firstPersonSceneDepthTarget,
                 frameIndex,
                 viewportWidth,
                 viewportHeight,

@@ -17,19 +17,30 @@ public final class TechniqueInputValidateStep {
         if (!isFinite(raw.advancedRawData())) {
             return false;
         }
-        if (raw.rawMaskTarget().width <= 0 || raw.rawMaskTarget().height <= 0) {
+        if (raw.worldRawMaskTarget().width <= 0 || raw.worldRawMaskTarget().height <= 0) {
             return false;
         }
-        if (raw.rawMaskTarget().width != raw.hollowMaskTarget().width
-                || raw.rawMaskTarget().height != raw.hollowMaskTarget().height) {
+        if (raw.firstPersonRawMaskTarget().width <= 0 || raw.firstPersonRawMaskTarget().height <= 0) {
+            return false;
+        }
+        if (raw.worldRawMaskTarget().width != raw.worldHollowMaskTarget().width
+                || raw.worldRawMaskTarget().height != raw.worldHollowMaskTarget().height) {
+            return false;
+        }
+        if (raw.firstPersonRawMaskTarget().width != raw.firstPersonHollowMaskTarget().width
+                || raw.firstPersonRawMaskTarget().height != raw.firstPersonHollowMaskTarget().height) {
             return false;
         }
 
         return raw.mainTarget().getColorTextureView() != null
-                && raw.rawMaskTarget().getColorTextureView() != null
-                && raw.rawMaskTarget().getDepthTextureView() != null
-                && raw.hollowMaskTarget().getColorTextureView() != null
-                && raw.sceneDepthTarget().getDepthTextureView() != null;
+                && raw.worldRawMaskTarget().getColorTextureView() != null
+                && raw.worldRawMaskTarget().getDepthTextureView() != null
+                && raw.worldHollowMaskTarget().getColorTextureView() != null
+                && raw.worldSceneDepthTarget().getDepthTextureView() != null
+                && raw.firstPersonRawMaskTarget().getColorTextureView() != null
+                && raw.firstPersonRawMaskTarget().getDepthTextureView() != null
+                && raw.firstPersonHollowMaskTarget().getColorTextureView() != null
+                && raw.firstPersonSceneDepthTarget().getDepthTextureView() != null;
     }
 
     public int normalizedFrameIndex(RawInputSnapshot raw) {

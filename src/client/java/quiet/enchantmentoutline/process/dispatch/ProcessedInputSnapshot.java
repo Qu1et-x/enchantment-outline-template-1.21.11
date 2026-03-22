@@ -12,17 +12,23 @@ import java.util.Objects;
  */
 public final class ProcessedInputSnapshot {
     private final RenderTarget mainTarget;
-    private final RenderTarget rawMaskTarget;
-    private final RenderTarget hollowMaskTarget;
-    private final RenderTarget sceneDepthTarget;
+    private final RenderTarget worldRawMaskTarget;
+    private final RenderTarget firstPersonRawMaskTarget;
+    private final RenderTarget worldHollowMaskTarget;
+    private final RenderTarget firstPersonHollowMaskTarget;
+    private final RenderTarget worldSceneDepthTarget;
+    private final RenderTarget firstPersonSceneDepthTarget;
     private final OutlineFrameData frameData;
     private final OutlineAdvancedInput advancedInput;
 
     private ProcessedInputSnapshot(Builder builder) {
         this.mainTarget = Objects.requireNonNull(builder.mainTarget, "mainTarget");
-        this.rawMaskTarget = Objects.requireNonNull(builder.rawMaskTarget, "rawMaskTarget");
-        this.hollowMaskTarget = Objects.requireNonNull(builder.hollowMaskTarget, "hollowMaskTarget");
-        this.sceneDepthTarget = Objects.requireNonNull(builder.sceneDepthTarget, "sceneDepthTarget");
+        this.worldRawMaskTarget = Objects.requireNonNull(builder.worldRawMaskTarget, "worldRawMaskTarget");
+        this.firstPersonRawMaskTarget = Objects.requireNonNull(builder.firstPersonRawMaskTarget, "firstPersonRawMaskTarget");
+        this.worldHollowMaskTarget = Objects.requireNonNull(builder.worldHollowMaskTarget, "worldHollowMaskTarget");
+        this.firstPersonHollowMaskTarget = Objects.requireNonNull(builder.firstPersonHollowMaskTarget, "firstPersonHollowMaskTarget");
+        this.worldSceneDepthTarget = Objects.requireNonNull(builder.worldSceneDepthTarget, "worldSceneDepthTarget");
+        this.firstPersonSceneDepthTarget = Objects.requireNonNull(builder.firstPersonSceneDepthTarget, "firstPersonSceneDepthTarget");
         this.frameData = Objects.requireNonNull(builder.frameData, "frameData");
         this.advancedInput = Objects.requireNonNull(builder.advancedInput, "advancedInput");
     }
@@ -32,15 +38,39 @@ public final class ProcessedInputSnapshot {
     }
 
     public RenderTarget rawMaskTarget() {
-        return rawMaskTarget;
+        return worldRawMaskTarget;
     }
 
     public RenderTarget hollowMaskTarget() {
-        return hollowMaskTarget;
+        return worldHollowMaskTarget;
     }
 
     public RenderTarget sceneDepthTarget() {
-        return sceneDepthTarget;
+        return worldSceneDepthTarget;
+    }
+
+    public RenderTarget worldRawMaskTarget() {
+        return worldRawMaskTarget;
+    }
+
+    public RenderTarget firstPersonRawMaskTarget() {
+        return firstPersonRawMaskTarget;
+    }
+
+    public RenderTarget worldHollowMaskTarget() {
+        return worldHollowMaskTarget;
+    }
+
+    public RenderTarget firstPersonHollowMaskTarget() {
+        return firstPersonHollowMaskTarget;
+    }
+
+    public RenderTarget worldSceneDepthTarget() {
+        return worldSceneDepthTarget;
+    }
+
+    public RenderTarget firstPersonSceneDepthTarget() {
+        return firstPersonSceneDepthTarget;
     }
 
     public OutlineFrameData frameData() {
@@ -53,9 +83,12 @@ public final class ProcessedInputSnapshot {
 
     public static final class Builder {
         private RenderTarget mainTarget;
-        private RenderTarget rawMaskTarget;
-        private RenderTarget hollowMaskTarget;
-        private RenderTarget sceneDepthTarget;
+        private RenderTarget worldRawMaskTarget;
+        private RenderTarget firstPersonRawMaskTarget;
+        private RenderTarget worldHollowMaskTarget;
+        private RenderTarget firstPersonHollowMaskTarget;
+        private RenderTarget worldSceneDepthTarget;
+        private RenderTarget firstPersonSceneDepthTarget;
         private OutlineFrameData frameData;
         private OutlineAdvancedInput advancedInput = OutlineAdvancedInput.disabled();
 
@@ -65,17 +98,47 @@ public final class ProcessedInputSnapshot {
         }
 
         public Builder rawMaskTarget(RenderTarget target) {
-            this.rawMaskTarget = target;
+            this.worldRawMaskTarget = target;
             return this;
         }
 
         public Builder hollowMaskTarget(RenderTarget target) {
-            this.hollowMaskTarget = target;
+            this.worldHollowMaskTarget = target;
             return this;
         }
 
         public Builder sceneDepthTarget(RenderTarget target) {
-            this.sceneDepthTarget = target;
+            this.worldSceneDepthTarget = target;
+            return this;
+        }
+
+        public Builder worldRawMaskTarget(RenderTarget target) {
+            this.worldRawMaskTarget = target;
+            return this;
+        }
+
+        public Builder firstPersonRawMaskTarget(RenderTarget target) {
+            this.firstPersonRawMaskTarget = target;
+            return this;
+        }
+
+        public Builder worldHollowMaskTarget(RenderTarget target) {
+            this.worldHollowMaskTarget = target;
+            return this;
+        }
+
+        public Builder firstPersonHollowMaskTarget(RenderTarget target) {
+            this.firstPersonHollowMaskTarget = target;
+            return this;
+        }
+
+        public Builder worldSceneDepthTarget(RenderTarget target) {
+            this.worldSceneDepthTarget = target;
+            return this;
+        }
+
+        public Builder firstPersonSceneDepthTarget(RenderTarget target) {
+            this.firstPersonSceneDepthTarget = target;
             return this;
         }
 

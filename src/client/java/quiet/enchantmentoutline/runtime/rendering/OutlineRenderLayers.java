@@ -17,6 +17,7 @@ import quiet.enchantmentoutline.mixin.client.RenderTypeAccessor;
 import quiet.enchantmentoutline.mixin.client.RenderTypeStateAccessor;
 import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,49 +62,64 @@ public class OutlineRenderLayers {
                     .build()
     );
 
-    public static final OutputTarget ENCHANTMENT_MASK_TARGET = new OutputTarget(
-            "enchantment_mask",
-            () -> MaskBufferManager.getInstance().getMaskTarget()
+    public static final OutputTarget WORLD_MASK_TARGET = new OutputTarget(
+            "enchantment_mask_world",
+            () -> MaskBufferManager.getInstance().getWorldMaskTarget()
     );
 
-    private static final Map<Identifier, RenderType> ZFIX_DEPTH_LAYERS = new HashMap<>();
-    private static final Map<Identifier, RenderType> OUTLINE_COLOR_LAYERS = new HashMap<>();
+    public static final OutputTarget FIRST_PERSON_MASK_TARGET = new OutputTarget(
+            "enchantment_mask_first_person",
+            () -> MaskBufferManager.getInstance().getFirstPersonMaskTarget()
+    );
 
-    public static final RenderType ZFIX_DEPTH_LAYER = getZfixDepthLayer(DEFAULT_ITEM_ATLAS);
+    private static final Map<OutlineMaskBranch, Map<Identifier, RenderType>> ZFIX_DEPTH_LAYERS = new EnumMap<>(OutlineMaskBranch.class);
+    private static final Map<OutlineMaskBranch, Map<Identifier, RenderType>> OUTLINE_COLOR_LAYERS = new EnumMap<>(OutlineMaskBranch.class);
 
-    public static final RenderType OUTLINE_COLOR_LAYER = getOutlineColorLayer(DEFAULT_ITEM_ATLAS);
+    public static final RenderType ZFIX_DEPTH_LAYER = getZfixDepthLayer(DEFAULT_ITEM_ATLAS, OutlineMaskBranch.WORLD);
+
+    public static final RenderType OUTLINE_COLOR_LAYER = getOutlineColorLayer(DEFAULT_ITEM_ATLAS, OutlineMaskBranch.WORLD);
 
     public static synchronized RenderType getZfixDepthLayer(Identifier textureId) {
+        return getZfixDepthLayer(textureId, OutlineMaskBranch.WORLD);
+    }
+
+    public static synchronized RenderType getZfixDepthLayer(Identifier textureId, OutlineMaskBranch branch) {
         Identifier key = textureId == null ? DEFAULT_ITEM_ATLAS : textureId;
-        RenderType cached = ZFIX_DEPTH_LAYERS.get(key);
+        Map<Identifier, RenderType> cache = ZFIX_DEPTH_LAYERS.computeIfAbsent(branch, ignored -> new HashMap<>());
+        RenderType cached = cache.get(key);
         if (cached != null) {
             return cached;
         }
 
-        if (ZFIX_DEPTH_LAYERS.size() >= DYNAMIC_LAYER_CACHE_LIMIT) {
-            return fallbackToDefaultLayer(ZFIX_DEPTH_LAYERS, ZFIX_DEPTH_LAYER, "zfix", key);
+        if (cache.size() >= DYNAMIC_LAYER_CACHE_LIMIT) {
+            return fallbackToDefaultLayer(cache, getDefaultLayerForBranch(true, branch), "zfix", key, branch);
         }
 
-        RenderType created = createZfixDepthLayer(key);
-        ZFIX_DEPTH_LAYERS.put(key, created);
-        logLayerCreate("zfix", key, ZFIX_DEPTH_LAYERS.size());
+        RenderType created = createZfixDepthLayer(key, branch);
+        cache.put(key, created);
+        logLayerCreate("zfix", key, cache.size(), branch);
         return created;
     }
 
     public static synchronized RenderType getOutlineColorLayer(Identifier textureId) {
+        return getOutlineColorLayer(textureId, OutlineMaskBranch.WORLD);
+    }
+
+    public static synchronized RenderType getOutlineColorLayer(Identifier textureId, OutlineMaskBranch branch) {
         Identifier key = textureId == null ? DEFAULT_ITEM_ATLAS : textureId;
-        RenderType cached = OUTLINE_COLOR_LAYERS.get(key);
+        Map<Identifier, RenderType> cache = OUTLINE_COLOR_LAYERS.computeIfAbsent(branch, ignored -> new HashMap<>());
+        RenderType cached = cache.get(key);
         if (cached != null) {
             return cached;
         }
 
-        if (OUTLINE_COLOR_LAYERS.size() >= DYNAMIC_LAYER_CACHE_LIMIT) {
-            return fallbackToDefaultLayer(OUTLINE_COLOR_LAYERS, OUTLINE_COLOR_LAYER, "color", key);
+        if (cache.size() >= DYNAMIC_LAYER_CACHE_LIMIT) {
+            return fallbackToDefaultLayer(cache, getDefaultLayerForBranch(false, branch), "color", key, branch);
         }
 
-        RenderType created = createOutlineColorLayer(key);
-        OUTLINE_COLOR_LAYERS.put(key, created);
-        logLayerCreate("color", key, OUTLINE_COLOR_LAYERS.size());
+        RenderType created = createOutlineColorLayer(key, branch);
+        cache.put(key, created);
+        logLayerCreate("color", key, cache.size(), branch);
         return created;
     }
 
@@ -129,12 +145,17 @@ public class OutlineRenderLayers {
         return DEFAULT_ITEM_ATLAS;
     }
 
-    private static RenderType fallbackToDefaultLayer(Map<Identifier, RenderType> cache, RenderType defaultLayer, String passName, Identifier requestedTexture) {
+    private static RenderType fallbackToDefaultLayer(Map<Identifier, RenderType> cache,
+                                                     RenderType defaultLayer,
+                                                     String passName,
+                                                     Identifier requestedTexture,
+                                                     OutlineMaskBranch branch) {
         if (CACHE_LIMIT_LOG_COUNT < OBSERVABILITY_WINDOW) {
             CACHE_LIMIT_LOG_COUNT++;
-            LOGGER.warn("Dynamic layer cache limit reached ({}). pass={}, requestedTexture={}, fallbackTexture={} ({}/{})",
+            LOGGER.warn("Dynamic layer cache limit reached ({}). pass={}, branch={}, requestedTexture={}, fallbackTexture={} ({}/{})",
                     DYNAMIC_LAYER_CACHE_LIMIT,
                     passName,
+                    branch,
                     requestedTexture,
                     DEFAULT_ITEM_ATLAS,
                     CACHE_LIMIT_LOG_COUNT,
@@ -145,11 +166,12 @@ public class OutlineRenderLayers {
         return fallback != null ? fallback : defaultLayer;
     }
 
-    private static void logLayerCreate(String passName, Identifier textureId, int size) {
+    private static void logLayerCreate(String passName, Identifier textureId, int size, OutlineMaskBranch branch) {
         if (OutlineDebugFlags.SUBMIT && CREATE_LOG_COUNT < OBSERVABILITY_WINDOW) {
             CREATE_LOG_COUNT++;
-            LOGGER.info("Created dynamic mask layer: pass={}, texture={}, cacheSize={}/{} ({}/{})",
+            LOGGER.info("Created dynamic mask layer: pass={}, branch={}, texture={}, cacheSize={}/{} ({}/{})",
                     passName,
+                    branch,
                     textureId,
                     size,
                     DYNAMIC_LAYER_CACHE_LIMIT,
@@ -158,28 +180,46 @@ public class OutlineRenderLayers {
         }
     }
 
-    private static RenderType createZfixDepthLayer(Identifier textureId) {
+    private static RenderType createZfixDepthLayer(Identifier textureId, OutlineMaskBranch branch) {
         return RenderTypeAccessor.callCreate(
-                "enchantment_mask_zfix_depth/" + textureId,
+                "enchantment_mask_" + branch.name().toLowerCase() + "_zfix_depth/" + textureId,
                 RenderSetup.builder(OUTLINE_ZFIX_DEPTH_PIPELINE)
                         .withTexture("Sampler0", textureId)
                         .useLightmap()
                         .useOverlay()
-                        .setOutputTarget(ENCHANTMENT_MASK_TARGET)
+                        .setOutputTarget(outputTargetFor(branch))
                         .createRenderSetup()
         );
     }
 
-    private static RenderType createOutlineColorLayer(Identifier textureId) {
+    private static RenderType createOutlineColorLayer(Identifier textureId, OutlineMaskBranch branch) {
         return RenderTypeAccessor.callCreate(
-                "enchantment_mask_color/" + textureId,
+                "enchantment_mask_" + branch.name().toLowerCase() + "_color/" + textureId,
                 RenderSetup.builder(OUTLINE_COLOR_PIPELINE)
                         .withTexture("Sampler0", textureId)
                         .useLightmap()
                         .useOverlay()
-                        .setOutputTarget(ENCHANTMENT_MASK_TARGET)
+                        .setOutputTarget(outputTargetFor(branch))
                         .createRenderSetup()
         );
+    }
+
+    private static RenderType getDefaultLayerForBranch(boolean zfixPass, OutlineMaskBranch branch) {
+        Identifier key = DEFAULT_ITEM_ATLAS;
+        Map<Identifier, RenderType> cache = zfixPass
+                ? ZFIX_DEPTH_LAYERS.computeIfAbsent(branch, ignored -> new HashMap<>())
+                : OUTLINE_COLOR_LAYERS.computeIfAbsent(branch, ignored -> new HashMap<>());
+        RenderType existing = cache.get(key);
+        if (existing != null) {
+            return existing;
+        }
+        RenderType created = zfixPass ? createZfixDepthLayer(key, branch) : createOutlineColorLayer(key, branch);
+        cache.put(key, created);
+        return created;
+    }
+
+    private static OutputTarget outputTargetFor(OutlineMaskBranch branch) {
+        return branch == OutlineMaskBranch.FIRST_PERSON ? FIRST_PERSON_MASK_TARGET : WORLD_MASK_TARGET;
     }
 }
 

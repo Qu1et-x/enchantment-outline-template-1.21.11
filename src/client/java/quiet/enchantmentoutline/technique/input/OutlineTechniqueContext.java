@@ -9,22 +9,31 @@ import java.util.Objects;
  */
 public final class OutlineTechniqueContext implements OutlineTechniqueInput {
     private final RenderTarget mainTarget;
-    private final RenderTarget rawMaskTarget;
-    private final RenderTarget hollowMaskTarget;
-    private final RenderTarget sceneDepthTarget;
+    private final RenderTarget worldRawMaskTarget;
+    private final RenderTarget firstPersonRawMaskTarget;
+    private final RenderTarget worldHollowMaskTarget;
+    private final RenderTarget firstPersonHollowMaskTarget;
+    private final RenderTarget worldSceneDepthTarget;
+    private final RenderTarget firstPersonSceneDepthTarget;
     private final OutlineFrameData frameData;
     private final OutlineAdvancedInput advancedInput;
 
     public OutlineTechniqueContext(RenderTarget mainTarget,
-                                   RenderTarget rawMaskTarget,
-                                   RenderTarget hollowMaskTarget,
-                                   RenderTarget sceneDepthTarget,
+                                   RenderTarget worldRawMaskTarget,
+                                   RenderTarget firstPersonRawMaskTarget,
+                                   RenderTarget worldHollowMaskTarget,
+                                   RenderTarget firstPersonHollowMaskTarget,
+                                   RenderTarget worldSceneDepthTarget,
+                                   RenderTarget firstPersonSceneDepthTarget,
                                    OutlineFrameData frameData,
                                    OutlineAdvancedInput advancedInput) {
         this.mainTarget = Objects.requireNonNull(mainTarget, "mainTarget");
-        this.rawMaskTarget = Objects.requireNonNull(rawMaskTarget, "rawMaskTarget");
-        this.hollowMaskTarget = Objects.requireNonNull(hollowMaskTarget, "hollowMaskTarget");
-        this.sceneDepthTarget = Objects.requireNonNull(sceneDepthTarget, "sceneDepthTarget");
+        this.worldRawMaskTarget = Objects.requireNonNull(worldRawMaskTarget, "worldRawMaskTarget");
+        this.firstPersonRawMaskTarget = Objects.requireNonNull(firstPersonRawMaskTarget, "firstPersonRawMaskTarget");
+        this.worldHollowMaskTarget = Objects.requireNonNull(worldHollowMaskTarget, "worldHollowMaskTarget");
+        this.firstPersonHollowMaskTarget = Objects.requireNonNull(firstPersonHollowMaskTarget, "firstPersonHollowMaskTarget");
+        this.worldSceneDepthTarget = Objects.requireNonNull(worldSceneDepthTarget, "worldSceneDepthTarget");
+        this.firstPersonSceneDepthTarget = Objects.requireNonNull(firstPersonSceneDepthTarget, "firstPersonSceneDepthTarget");
         this.frameData = Objects.requireNonNull(frameData, "frameData");
         this.advancedInput = Objects.requireNonNull(advancedInput, "advancedInput");
     }
@@ -35,18 +44,33 @@ public final class OutlineTechniqueContext implements OutlineTechniqueInput {
     }
 
     @Override
-    public RenderTarget rawMaskTarget() {
-        return rawMaskTarget;
+    public RenderTarget worldRawMaskTarget() {
+        return worldRawMaskTarget;
     }
 
     @Override
-    public RenderTarget hollowMaskTarget() {
-        return hollowMaskTarget;
+    public RenderTarget firstPersonRawMaskTarget() {
+        return firstPersonRawMaskTarget;
     }
 
     @Override
-    public RenderTarget sceneDepthTarget() {
-        return sceneDepthTarget;
+    public RenderTarget worldHollowMaskTarget() {
+        return worldHollowMaskTarget;
+    }
+
+    @Override
+    public RenderTarget firstPersonHollowMaskTarget() {
+        return firstPersonHollowMaskTarget;
+    }
+
+    @Override
+    public RenderTarget worldSceneDepthTarget() {
+        return worldSceneDepthTarget;
+    }
+
+    @Override
+    public RenderTarget firstPersonSceneDepthTarget() {
+        return firstPersonSceneDepthTarget;
     }
 
     @Override

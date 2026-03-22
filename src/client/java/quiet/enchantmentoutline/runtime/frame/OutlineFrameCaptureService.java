@@ -33,36 +33,30 @@ public final class OutlineFrameCaptureService {
 
     public void beginFrame() {
         RenderSystem.assertOnRenderThread();
-        RenderTarget target = MaskBufferManager.getInstance().getMaskTarget();
-        RenderTarget hollowTarget = MaskBufferManager.getInstance().getHollowMaskTarget();
+        RenderTarget worldMaskTarget = MaskBufferManager.getInstance().getWorldMaskTarget();
+        RenderTarget firstPersonMaskTarget = MaskBufferManager.getInstance().getFirstPersonMaskTarget();
+        RenderTarget worldHollowTarget = MaskBufferManager.getInstance().getWorldHollowMaskTarget();
+        RenderTarget firstPersonHollowTarget = MaskBufferManager.getInstance().getFirstPersonHollowMaskTarget();
         beginFrameCount++;
         if (OutlineDebugFlags.FRAME && beginFrameCount <= 16) {
-            LOGGER.info("Begin frame #{}, mask={}x{}", beginFrameCount, target.width, target.height);
+            LOGGER.info("Begin frame #{}, worldMask={}x{}, handMask={}x{}",
+                    beginFrameCount,
+                    worldMaskTarget.width,
+                    worldMaskTarget.height,
+                    firstPersonMaskTarget.width,
+                    firstPersonMaskTarget.height);
         }
 
-        RenderSystem.getDevice()
-                .createCommandEncoder()
-                .clearColorAndDepthTextures(
-                        Objects.requireNonNull(target.getColorTexture(), "Mask color texture is not initialized"),
-                        0,
-                        Objects.requireNonNull(target.getDepthTexture(), "Mask depth texture is not initialized"),
-                        1.0
-                );
-
-        RenderSystem.getDevice()
-                .createCommandEncoder()
-                .clearColorAndDepthTextures(
-                        Objects.requireNonNull(hollowTarget.getColorTexture(), "Hollow mask color texture is not initialized"),
-                        0,
-                        Objects.requireNonNull(hollowTarget.getDepthTexture(), "Hollow mask depth texture is not initialized"),
-                        1.0
-                );
+        clearTarget(worldMaskTarget, "World mask");
+        clearTarget(firstPersonMaskTarget, "First-person mask");
+        clearTarget(worldHollowTarget, "World hollow mask");
+        clearTarget(firstPersonHollowTarget, "First-person hollow mask");
     }
 
     public void captureSceneDepthBeforeHand() {
         RenderSystem.assertOnRenderThread();
         RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
-        RenderTarget sceneTarget = MaskBufferManager.getInstance().getSceneDepthTarget();
+        RenderTarget sceneTarget = MaskBufferManager.getInstance().getWorldSceneDepthTarget();
         sceneTarget.copyDepthFrom(mainTarget);
         sceneCaptureCount++;
         if (OutlineDebugFlags.FRAME && sceneCaptureCount <= 24) {
@@ -71,6 +65,31 @@ public final class OutlineFrameCaptureService {
                     mainTarget.width,
                     mainTarget.height);
         }
+    }
+
+    public void captureSceneDepthAfterHand() {
+        RenderSystem.assertOnRenderThread();
+        RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
+        RenderTarget sceneTarget = MaskBufferManager.getInstance().getFirstPersonSceneDepthTarget();
+        sceneTarget.copyDepthFrom(mainTarget);
+        sceneCaptureCount++;
+        if (OutlineDebugFlags.FRAME && sceneCaptureCount <= 24) {
+            LOGGER.info("Captured scene depth after hand render: pass={}/24, main={}x{}",
+                    sceneCaptureCount,
+                    mainTarget.width,
+                    mainTarget.height);
+        }
+    }
+
+    private static void clearTarget(RenderTarget target, String name) {
+        RenderSystem.getDevice()
+                .createCommandEncoder()
+                .clearColorAndDepthTextures(
+                        Objects.requireNonNull(target.getColorTexture(), name + " color texture is not initialized"),
+                        0,
+                        Objects.requireNonNull(target.getDepthTexture(), name + " depth texture is not initialized"),
+                        1.0
+                );
     }
 }
 

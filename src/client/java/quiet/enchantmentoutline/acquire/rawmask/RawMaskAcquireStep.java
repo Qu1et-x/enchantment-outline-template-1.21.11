@@ -9,11 +9,27 @@ import quiet.enchantmentoutline.runtime.buffer.MaskBufferManager;
  */
 public final class RawMaskAcquireStep {
     public RenderTarget rawMaskTarget() {
-        return MaskBufferManager.getInstance().getMaskTarget();
+        return worldRawMaskTarget();
     }
 
     public RenderTarget hollowMaskTarget() {
-        return MaskBufferManager.getInstance().getHollowMaskTarget();
+        return worldHollowMaskTarget();
+    }
+
+    public RenderTarget worldRawMaskTarget() {
+        return MaskBufferManager.getInstance().getWorldMaskTarget();
+    }
+
+    public RenderTarget firstPersonRawMaskTarget() {
+        return MaskBufferManager.getInstance().getFirstPersonMaskTarget();
+    }
+
+    public RenderTarget worldHollowMaskTarget() {
+        return MaskBufferManager.getInstance().getWorldHollowMaskTarget();
+    }
+
+    public RenderTarget firstPersonHollowMaskTarget() {
+        return MaskBufferManager.getInstance().getFirstPersonHollowMaskTarget();
     }
 }
 
