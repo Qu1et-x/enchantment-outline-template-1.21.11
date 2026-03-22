@@ -61,6 +61,11 @@ public final class TechniqueInputValidateStep {
                 .outlineRadiusPixels(Math.max(1, source.outlineRadiusPixels()))
                 .alphaThreshold(Math.max(0.0F, source.alphaThreshold()))
                 .depthEpsilon(Math.max(0.0F, source.depthEpsilon()))
+                .outlineColorRed(clamp01(source.outlineColorRed()))
+                .outlineColorGreen(clamp01(source.outlineColorGreen()))
+                .outlineColorBlue(clamp01(source.outlineColorBlue()))
+                .outlineColorMix(clamp01(source.outlineColorMix()))
+                .outlineGlow(clampGlow(source.outlineGlow()))
                 .advancedEffectEnabled(source.advancedEffectEnabled())
                 .build();
     }
@@ -95,7 +100,13 @@ public final class TechniqueInputValidateStep {
         if (settings == null) {
             return true;
         }
-        return Float.isFinite(settings.alphaThreshold()) && Float.isFinite(settings.depthEpsilon());
+        return Float.isFinite(settings.alphaThreshold())
+                && Float.isFinite(settings.depthEpsilon())
+                && Float.isFinite(settings.outlineColorRed())
+                && Float.isFinite(settings.outlineColorGreen())
+                && Float.isFinite(settings.outlineColorBlue())
+                && Float.isFinite(settings.outlineColorMix())
+                && Float.isFinite(settings.outlineGlow());
     }
 
     private static boolean isFinite(RawAdvancedFrameData data) {
@@ -119,6 +130,26 @@ public final class TechniqueInputValidateStep {
 
     private static double finiteOrZero(double value) {
         return Double.isFinite(value) ? value : 0.0;
+    }
+
+    private static float clamp01(float value) {
+        if (value < 0.0F) {
+            return 0.0F;
+        }
+        if (value > 1.0F) {
+            return 1.0F;
+        }
+        return value;
+    }
+
+    private static float clampGlow(float value) {
+        if (value < 0.0F) {
+            return 0.0F;
+        }
+        if (value > 4.0F) {
+            return 4.0F;
+        }
+        return value;
     }
 }
 

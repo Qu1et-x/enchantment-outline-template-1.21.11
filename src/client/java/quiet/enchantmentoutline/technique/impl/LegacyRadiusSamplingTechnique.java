@@ -16,7 +16,10 @@ import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
 import quiet.enchantmentoutline.technique.OutlineTechniqueMode;
 import quiet.enchantmentoutline.technique.input.OutlineTechniqueInput;
+import quiet.enchantmentoutline.technique.input.OutlineTechniqueSettings;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
 
@@ -28,21 +31,7 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
     private static int skipLogCount;
     private static int processLogCount;
 
-    private static final RenderPipeline DEPTH_AWARE_OUTLINE_BLIT = RenderPipelines.register(RenderPipeline.builder()
-            .withLocation(Identifier.parse("enchantment-outline:pipeline/depth_aware_outline_blit"))
-            .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
-            .withFragmentShader(Identifier.parse("enchantment-outline:core/outline_composite_shared"))
-            .withSampler("HollowSampler")
-            .withSampler("RawMaskSampler")
-            .withSampler("MaskDepthSampler")
-            .withSampler("SceneDepthSampler")
-            .withShaderDefine("LEGACY_EDGE")
-            .withBlend(BlendFunction.ENTITY_OUTLINE_BLIT)
-            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-            .withDepthWrite(false)
-            .withColorWrite(true, false)
-            .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
-            .build());
+    private static final Map<String, RenderPipeline> LEGACY_PIPELINES = new HashMap<>();
 
     public LegacyRadiusSamplingTechnique() {
         super(OutlineTechniqueMode.LEGACY_RADIUS, "LegacyRadiusSamplingTechnique");
@@ -54,19 +43,22 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
                 "world",
                 input.worldBranch().hollowMaskTarget(),
                 input.worldBranch().rawMaskTarget(),
-                input.worldBranch().sceneDepthTarget());
+                input.worldBranch().sceneDepthTarget(),
+                input.frameData().settings());
         composeBranch(input,
                 "first_person",
                 input.firstPersonBranch().hollowMaskTarget(),
                 input.firstPersonBranch().rawMaskTarget(),
-                input.firstPersonBranch().sceneDepthTarget());
+                input.firstPersonBranch().sceneDepthTarget(),
+                input.frameData().settings());
     }
 
     private static void composeBranch(OutlineTechniqueInput input,
                                       String branchLabel,
                                       RenderTarget hollowMaskTarget,
                                       RenderTarget rawMaskTarget,
-                                      RenderTarget sceneDepthTarget) {
+                                      RenderTarget sceneDepthTarget,
+                                      OutlineTechniqueSettings settings) {
         if (hollowMaskTarget.getColorTextureView() == null
                 || rawMaskTarget.getColorTextureView() == null
                 || rawMaskTarget.getDepthTextureView() == null
@@ -101,7 +93,7 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
                         Objects.requireNonNull(input.mainTarget().getColorTextureView(), "Main target color view is not initialized"),
                         OptionalInt.empty())) {
 
-            renderPass.setPipeline(DEPTH_AWARE_OUTLINE_BLIT);
+            renderPass.setPipeline(legacyPipeline(settings));
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.bindTexture("HollowSampler", hollowMaskTarget.getColorTextureView(),
                     RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
@@ -114,6 +106,64 @@ public class LegacyRadiusSamplingTechnique extends AbstractOutlineTechnique {
 
             renderPass.draw(0, 3);
         }
+    }
+
+    private static RenderPipeline legacyPipeline(OutlineTechniqueSettings settings) {
+        int radius = Math.max(1, settings.outlineRadiusPixels());
+        int alphaScaled = Math.max(0, Math.round(settings.alphaThreshold() * 10000.0F));
+        int depthScaled = Math.max(0, Math.round(settings.depthEpsilon() * 1000000.0F));
+        int glowScaled = Math.max(0, Math.round(settings.outlineGlow() * 1000.0F));
+        int colorRScaled = Math.max(0, Math.round(settings.outlineColorRed() * 255.0F));
+        int colorGScaled = Math.max(0, Math.round(settings.outlineColorGreen() * 255.0F));
+        int colorBScaled = Math.max(0, Math.round(settings.outlineColorBlue() * 255.0F));
+        int colorMixScaled = Math.max(0, Math.round(settings.outlineColorMix() * 1000.0F));
+
+        String key = radius + "_" + alphaScaled + "_" + depthScaled + "_"
+                + glowScaled + "_" + colorRScaled + "_" + colorGScaled + "_" + colorBScaled + "_" + colorMixScaled;
+        return LEGACY_PIPELINES.computeIfAbsent(
+                key,
+                ignored -> buildLegacyPipeline(settings, radius, alphaScaled, depthScaled, glowScaled, colorRScaled, colorGScaled, colorBScaled, colorMixScaled));
+    }
+
+    private static RenderPipeline buildLegacyPipeline(OutlineTechniqueSettings settings,
+                                                      int radius,
+                                                      int alphaScaled,
+                                                      int depthScaled,
+                                                      int glowScaled,
+                                                      int colorRScaled,
+                                                      int colorGScaled,
+                                                      int colorBScaled,
+                                                      int colorMixScaled) {
+        return RenderPipelines.register(RenderPipeline.builder()
+                .withLocation(Identifier.parse("enchantment-outline:pipeline/depth_aware_outline_blit_r" + radius
+                        + "_a" + alphaScaled
+                        + "_d" + depthScaled
+                        + "_g" + glowScaled
+                        + "_cr" + colorRScaled
+                        + "_cg" + colorGScaled
+                        + "_cb" + colorBScaled
+                        + "_cm" + colorMixScaled))
+                .withVertexShader(Identifier.parse("enchantment-outline:core/depth_aware_blit"))
+                .withFragmentShader(Identifier.parse("enchantment-outline:core/outline_composite_shared"))
+                .withSampler("HollowSampler")
+                .withSampler("RawMaskSampler")
+                .withSampler("MaskDepthSampler")
+                .withSampler("SceneDepthSampler")
+                .withShaderDefine("LEGACY_EDGE")
+                .withShaderDefine("OUTLINE_RADIUS", radius)
+                .withShaderDefine("ALPHA_THRESHOLD", settings.alphaThreshold())
+                .withShaderDefine("DEPTH_EPSILON", settings.depthEpsilon())
+                .withShaderDefine("OUTLINE_COLOR_R", settings.outlineColorRed())
+                .withShaderDefine("OUTLINE_COLOR_G", settings.outlineColorGreen())
+                .withShaderDefine("OUTLINE_COLOR_B", settings.outlineColorBlue())
+                .withShaderDefine("OUTLINE_COLOR_MIX", settings.outlineColorMix())
+                .withShaderDefine("OUTLINE_GLOW", settings.outlineGlow())
+                .withBlend(BlendFunction.ENTITY_OUTLINE_BLIT)
+                .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                .withDepthWrite(false)
+                .withColorWrite(true, false)
+                .withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
+                .build());
     }
 }
 

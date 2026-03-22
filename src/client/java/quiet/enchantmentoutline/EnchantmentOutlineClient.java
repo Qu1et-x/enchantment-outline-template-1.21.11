@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import quiet.enchantmentoutline.debug.OutlineDebugFlags;
+import quiet.enchantmentoutline.runtime.command.OutlineHotReloadCommands;
 import quiet.enchantmentoutline.technique.OutlineTechniqueManager;
 
 public class EnchantmentOutlineClient implements ClientModInitializer {
@@ -11,6 +12,7 @@ public class EnchantmentOutlineClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		OutlineHotReloadCommands.register();
 		OutlineTechniqueManager manager = OutlineTechniqueManager.getInstance();
 		LOGGER.info("Client initialized. Active mode={}, debug(frame={}, buffer={}, preprocess={}, technique={}, submit={})",
 				manager.getCurrentMode().id(),

@@ -26,12 +26,19 @@ public final class OutlineRenderOrchestrator {
     private static int skipLogCount;
     private static int frameCounter;
 
-    private static final OutlineTechniqueSettings SHARED_SETTINGS = OutlineTechniqueSettings.builder()
+    private static final OutlineTechniqueSettings DEFAULT_SETTINGS = OutlineTechniqueSettings.builder()
             .outlineRadiusPixels(Integer.getInteger("enchantmentoutline.radius", 10))
             .alphaThreshold(parsePropertyFloat("enchantmentoutline.alphaThreshold", 0.001F))
             .depthEpsilon(parsePropertyFloat("enchantmentoutline.depthEpsilon", 0.00001F))
+            .outlineColorRed(parsePropertyFloat("enchantmentoutline.colorR", 1.0F))
+            .outlineColorGreen(parsePropertyFloat("enchantmentoutline.colorG", 1.0F))
+            .outlineColorBlue(parsePropertyFloat("enchantmentoutline.colorB", 1.0F))
+            .outlineColorMix(parsePropertyFloat("enchantmentoutline.colorMix", 0.0F))
+            .outlineGlow(parsePropertyFloat("enchantmentoutline.glow", 1.0F))
             .advancedEffectEnabled(Boolean.parseBoolean(System.getProperty("enchantmentoutline.advancedInput", "false")))
             .build();
+
+    private volatile OutlineTechniqueSettings currentSettings = DEFAULT_SETTINGS;
 
     private OutlineRenderOrchestrator() {
     }
@@ -51,12 +58,38 @@ public final class OutlineRenderOrchestrator {
         OutlineTechniqueManager.getInstance().setMode(modeText);
     }
 
+    public void setOutlineRadiusPixels(int radius) {
+        currentSettings = copySettings(currentSettings)
+                .outlineRadiusPixels(Math.max(1, radius))
+                .build();
+    }
+
+    public void setOutlineColor(float red, float green, float blue, float mix) {
+        currentSettings = copySettings(currentSettings)
+                .outlineColorRed(clamp01(red))
+                .outlineColorGreen(clamp01(green))
+                .outlineColorBlue(clamp01(blue))
+                .outlineColorMix(clamp01(mix))
+                .build();
+    }
+
+    public void setOutlineGlow(float glow) {
+        currentSettings = copySettings(currentSettings)
+                .outlineGlow(clampGlow(glow))
+                .build();
+    }
+
+    public OutlineTechniqueSettings currentSettings() {
+        return currentSettings;
+    }
+
     public void process(DeltaTracker deltaTracker) {
         RenderSystem.assertOnRenderThread();
 
         OutlineTechniqueManager techniqueManager = OutlineTechniqueManager.getInstance();
         frameCounter++;
-        RawInputSnapshot rawSnapshot = RawAcquireDispatcher.getInstance().acquire(frameCounter, SHARED_SETTINGS, deltaTracker);
+        OutlineTechniqueSettings settings = currentSettings;
+        RawInputSnapshot rawSnapshot = RawAcquireDispatcher.getInstance().acquire(frameCounter, settings, deltaTracker);
 
         if (OutlineDebugFlags.TECHNIQUE && processLogCount < 12) {
             processLogCount++;
@@ -99,6 +132,39 @@ public final class OutlineRenderOrchestrator {
             LOGGER.warn("Invalid float property {}='{}', fallback to {}", key, raw, fallback);
             return fallback;
         }
+    }
+
+    private static OutlineTechniqueSettings.Builder copySettings(OutlineTechniqueSettings source) {
+        return OutlineTechniqueSettings.builder()
+                .outlineRadiusPixels(source.outlineRadiusPixels())
+                .alphaThreshold(source.alphaThreshold())
+                .depthEpsilon(source.depthEpsilon())
+                .outlineColorRed(source.outlineColorRed())
+                .outlineColorGreen(source.outlineColorGreen())
+                .outlineColorBlue(source.outlineColorBlue())
+                .outlineColorMix(source.outlineColorMix())
+                .outlineGlow(source.outlineGlow())
+                .advancedEffectEnabled(source.advancedEffectEnabled());
+    }
+
+    private static float clamp01(float value) {
+        if (value < 0.0F) {
+            return 0.0F;
+        }
+        if (value > 1.0F) {
+            return 1.0F;
+        }
+        return value;
+    }
+
+    private static float clampGlow(float value) {
+        if (value < 0.0F) {
+            return 0.0F;
+        }
+        if (value > 4.0F) {
+            return 4.0F;
+        }
+        return value;
     }
 }
 
